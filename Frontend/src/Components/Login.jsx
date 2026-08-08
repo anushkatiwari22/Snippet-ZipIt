@@ -1,8 +1,32 @@
 import React from 'react';
-
-
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
+    
+    const navigate = useNavigate();
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+
+        const enteredDetails = {
+            email : e.target.email.value,
+            password : e.target.password.value
+        }
+
+        const response = await fetch("http://localhost:3000/login",{
+            method : "POST",
+            headers : {
+                "Content-Type" : "application/json",
+            },
+            body : JSON.stringify(enteredDetails)
+        });
+
+        if(response.ok) {
+            navigate("/")
+        }
+
+    }
+
    return (
       <main className="bg-gray-50 px-4 md:px-8">
          <div className="min-h-screen flex flex-col items-center justify-center">
@@ -10,9 +34,9 @@ const Login = () => {
 
                <div
                   className="p-6 rounded-lg bg-white border border-slate-300 shadow-xs md:p-8">
-                  <h1 className="text-slate-900 text-center text-3xl font-bold">Sign in</h1>
+                  <h1 className="text-slate-900 text-center text-3xl font-bold">Log in</h1>
 
-                  <form className="space-y-6 mt-10">
+                  <form className="space-y-6 mt-10" onSubmit={handleLogin}>
                      <div>
                         <label htmlFor="email"
                            className="mb-2 text-slate-900 font-medium text-sm inline-block">Email</label>
@@ -52,9 +76,9 @@ const Login = () => {
                         className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
                         Sign in</button>
 
-                     <div className="text-slate-900 text-sm text-center">Don't have an account? <a href="#"
+                     <div className="text-slate-900 text-sm text-center">Don't have an account? <Link to="/signup"
                         className="text-blue-700 hover:underline ml-1 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">Sign
-                        up</a>
+                        up</Link>
                      </div>
                   </form>
                </div>
