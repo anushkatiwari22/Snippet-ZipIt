@@ -17,6 +17,6 @@ const verifytoken=(req , res , next)=>{
 
 
 function verify(token){
-    const verified = jwt.verify(token , "mykey");
+    const verified = jwt.verify(token , process.env.SECRET_ID);
     return verified;
 }
