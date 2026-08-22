@@ -22,7 +22,7 @@ const Login = () => {
         });
 
         if(response.ok) {
-            navigate("/")
+            navigate("/questions")
         }
 
     }

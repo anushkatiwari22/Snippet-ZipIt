@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const verifytoken=(req , res , next)=>{
     const token = req.token;
@@ -7,6 +8,7 @@ const verifytoken=(req , res , next)=>{
     }
     else{
         if(verify(token)){
+            
             res.send("successfull");
         }
         else{
@@ -17,6 +19,6 @@ const verifytoken=(req , res , next)=>{
 
 
 function verify(token){
-    const verified = jwt.verify(token , "mykey");
+    const verified = jwt.verify(token , process.env.SECRET_KEY);
     return verified;
 }

@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const userModel = require('../models/userModel');
 const jwt = require("jsonwebtoken");
+const questionsModel = require('../models/questionsModel');
 require('dotenv').config();
 
 router
@@ -28,6 +29,9 @@ async function postSignUp(req,res){
     else{
         const user =await  userModel.create({email : data.email , password : data.password , username : data.username});
         user.save();
+
+        // const questionInfo = questionsModel.create();
+        // questionInfo.save();
         res.send("success");
     }
 }
