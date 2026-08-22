@@ -1,8 +1,10 @@
 const express = require('express');
 const { connection } = require('./db');
 const authRouter = require("./controllers/authRouter");
+const questionRouter = require("./controllers/questionsRouter");
 const app = express();
 const cors = require('cors');
+
 
 
 app.use(express.json());
@@ -15,6 +17,7 @@ connection();
 
 
 app.use("/",authRouter);
+app.use("/",questionRouter);
 
 app.listen(3000,() => {
     console.log("Server is listening at port 3000");
