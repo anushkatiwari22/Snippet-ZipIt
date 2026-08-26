@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import questions from "../utils/questions";
 import { useNavigate } from "react-router-dom";
+import UserContext from "../utils/UserContext";
 
 const Question = () => {
   const [currQuestion, setCurrQuestion] = useState(0);
   const [data, setData] = useState({});
   const [optionArray, setOptionArray] = useState([]);
+  // const {setObj} = useContext(UserContext);
 
   const naviagte = useNavigate();
 
@@ -14,23 +16,46 @@ const Question = () => {
       ...prev,
       [questions[currQuestion].question]: optionArray,
     }));
+  };
 
-    
+  const { obj , setObj } = useContext(UserContext);
+
+  const sendQuestions = async () => {
+    const resp = await fetch("http://localhost:3000/getDashboard", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        data,
+        userid: obj.userid,
+      }),
+    });
   };
 
   const sendQuestionToDB = async () => {
-    const response = await fetch("http://localhost:3000/questioninfo",{
-      "method" : "POST",
-      "headers" : {
-        "Content-Type" : "application/json"
+    const response = await fetch("http://localhost:3000/questioninfo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      body : JSON.stringify(data)
+      body: JSON.stringify({
+        data,
+        userid: obj.userid,
+      }),
     });
+    sendQuestions();
 
-    if(response.ok) {
+    if (response.ok) {
+      setObj((prev)=>({
+        ...prev , 
+        question : "true"
+      })) 
       naviagte("/dashboard");
     }
-  }
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gradient-to-br from-[#fdf2ef] via-[#fdf6f3] to-[#f6eef5]">
@@ -79,12 +104,13 @@ const Question = () => {
                 value={option}
                 onClick={(e) => {
                   const value = e.currentTarget.value;
-                  if(optionArray.includes(value)) {
-                    setOptionArray(prev => prev.filter(option => option != value));
-                  } else{
+                  if (optionArray.includes(value)) {
+                    setOptionArray((prev) =>
+                      prev.filter((option) => option != value),
+                    );
+                  } else {
                     setOptionArray((prev) => [...prev, value]);
                   }
-
                 }}
                 className={`group w-full max-w-md rounded-2xl border px-5 py-3 text-left font-medium shadow-sm transition-all duration-200 hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${
                   isSelected
@@ -116,9 +142,8 @@ const Question = () => {
 
           {currQuestion === questions.length - 1 ? (
             <button
-              onClick={() =>{
-                handleData(),
-                sendQuestionToDB();
+              onClick={() => {
+                (handleData(), sendQuestionToDB());
               }}
               className="px-8 py-2.5 rounded-full bg-[#f3d38a] text-[#2d2a3a] font-bold shadow-md shadow-[#f3d38a]/40 hover:shadow-xl hover:shadow-[#f3d38a]/50 hover:-translate-y-0.5 transition-all cursor-pointer"
             >

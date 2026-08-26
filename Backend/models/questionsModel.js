@@ -11,7 +11,7 @@ const questionsSchema = mongoose.Schema(
       ref: "userModel",
     },
   },
-  { timeStamps: true },
+  { timestamps: true },
 );
 
 const questionsModel = mongoose.model("questionsModel", questionsSchema);

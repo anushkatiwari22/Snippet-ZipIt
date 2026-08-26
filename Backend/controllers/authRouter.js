@@ -39,7 +39,7 @@ async function postSignUp(req,res){
 async function postLogin(req , res){
     const data = req.body;
     // console.log(data);
-    const user = await userModel.find({email : data.email});
+    const user = await userModel.findOne({email : data.email});
     if(user){
         if(user.password == data.password){
             const token = getjwt(user);
@@ -47,16 +47,25 @@ async function postLogin(req , res){
                 httpOnly : true ,
                 maxAge : 1000*60*60*24
             })
-            res.send("login Successfull");
+            res.json({
+                success : "true" ,
+                userid : user._id , 
+                username : user.username 
+            })
         }
         else{
-            res.send("Incorrect password");
+            res.json({
+                success : "false" , 
+                message : " incorrect password"
+            });
         }
     }
     else{
-        res.send("user Does not exists");
+        res.json({
+            success : "false" ,
+            message : "user does not exists"
+        });
     }
-
 }
 
 function getjwt(user){

@@ -10,15 +10,18 @@ questionRouter
 
 
 async function updateQuestionsInfo(req, res) {
-    const data = req.body;
-    console.log(data);
+    
+    const {data , userid} = req.body;
 
-    const questions = await questionsModel.create({data});
+    const questions = await questionsModel.create({data : data , userid  : userid});
     questions.save();
 
     res.json({
         success : "true"
     });
 }
+
+
+
 
 module.exports = questionRouter;

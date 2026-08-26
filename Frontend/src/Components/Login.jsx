@@ -1,9 +1,12 @@
-import React from 'react';
+import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import UserContext from '../utils/UserContext';
 
 const Login = () => {
     
     const navigate = useNavigate();
+    const {obj , setObj} = useContext(UserContext);
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -21,8 +24,18 @@ const Login = () => {
             body : JSON.stringify(enteredDetails)
         });
 
-        if(response.ok) {
-            navigate("/questions")
+        const data = await response.json();
+        console.log(data);
+        setObj(data);
+
+        if(obj?.question=="true"){
+         navigate("/dashboard")
+        }
+
+        else{
+           if(data.success == "true") {
+               navigate("/questions")
+           }
         }
 
     }
