@@ -5,6 +5,7 @@ const questionRouter = require("./controllers/questionsRouter");
 const app = express();
 const cors = require('cors');
 const groqrouter = require('./controllers/groqcontroller');
+const answerRouter = require('./controllers/answersRouter')
 
 
 
@@ -23,6 +24,7 @@ connection();
 app.use("/",authRouter);
 app.use("/",questionRouter);
 app.use('/' , groqrouter);
+app.use("/",answerRouter);
 
 app.listen(3000,() => {
     console.log("Server is listening at port 3000");
