@@ -1,21 +1,13 @@
 import { useContext, useEffect, useState } from "react";
 import UserContext from "../utils/UserContext";
-import Main from "./Main";
+import Header  from "./Header"
+import { Outlet } from "react-router-dom";
 
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
   const [dashboardData, setDashboardData] = useState();
 
-  // console.log(obj);
-  //console.log("USER ID:", obj?.userid);
-  // console.log(typeof(obj.userid));
-  //console.log(JSON.stringify(obj.userid));
-  // console.log(obj.userid);
-  // const user = {
-  //     id : obj.userid
-  // }
-
-  console.log(obj.userid);
+  console.log(obj?.userid);
   useEffect(() => {
     const getDashboard = async () => {
       const response = await fetch("http://localhost:3000/aidata", {
@@ -29,8 +21,7 @@ const Dashboard = () => {
       });
 
       if (response.ok) {
-        const data = await response.json(response);
-        // console.log(data);
+        const data = await response.json();
         setDashboardData(data);
       }
     };
@@ -40,13 +31,19 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  useEffect(() => {
-    console.log(dashboardData);
-  },[dashboardData])
 
   return (
-    <Main/>
-  );
+    <div className="flex w-full h-screen overflow-hidden">
+
+      <div className="w-[17%] h-full  flex-shrink-0">
+        <Header />   
+      </div>
+      <div className ="w-[83%] h-full overflow-y-auto">
+        <Outlet />
+      </div>
+    </div>
+  )
+
 };
 
 export default Dashboard;
