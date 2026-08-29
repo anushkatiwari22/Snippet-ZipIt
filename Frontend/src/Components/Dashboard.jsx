@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import UserContext from "../utils/UserContext";
+import Main from "./Main";
 
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
@@ -43,7 +44,9 @@ const Dashboard = () => {
     console.log(dashboardData);
   },[dashboardData])
 
-  return <div className="text-center font-bold text-2xl"></div>;
+  return (
+    <Main/>
+  );
 };
 
 export default Dashboard;
