@@ -2,6 +2,7 @@ import { Bell } from "lucide-react";
 import SkillBar from './SkillBar'
 import NextSteps from "./NextSteps";
 import { Quote } from "lucide-react";
+import DashboardCards from "./dashboardCards";
 
 const Main = () => {
   return (
@@ -15,26 +16,10 @@ const Main = () => {
           <button>
             <Bell />
           </button>
-          <button className="rounded-full pr-5 pl-5 bg-blue-400">R</button>
         </div>
       </div>
-      <div className="flex gap-90 p-10 pl-30 ">
-        <div className="flex flex-col justify-center border-b-gray-900 border-2 p-3 h-25 w-60 pb-7  rounded ">
-          <h3 className="font-medium text-gray-700 tracking-tighter">
-            Readiness
-          </h3>
-          <h1 className="text-4xl font-bold">60%</h1>
-        </div>
-        <div className="flex flex-col justify-center border-b-gray-900 border-2 p-3 h-25 w-60 pb-7 rounded ">
-          <h3 className="font-medium text-gray-700 tracking-tighter">Streak</h3>
-          <h1 className="text-4xl font-bold">3 days</h1>
-        </div>
-        <div className="flex flex-col justify-center border-b-gray-900 border-2 p-3 h-25 w-60 pb-7 rounded ">
-          <h3 className="font-medium text-gray-700 tracking-tighter">
-            Resume Score
-          </h3>
-          <h1 className="text-4xl font-bold">--</h1>
-        </div>
+      <div className="p-10">
+        <DashboardCards/>
       </div>
       <div className="flex gap-10 ml-10 mr-10">
         <div className="w-3/5"><SkillBar/></div>

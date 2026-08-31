@@ -1,13 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import UserContext from "../utils/UserContext";
-import Header  from "./Header"
+import Header from "./Header";
 import { Outlet } from "react-router-dom";
 
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
   const [dashboardData, setDashboardData] = useState();
 
-  console.log(obj?.userid);
   useEffect(() => {
     const getDashboard = async () => {
       const response = await fetch("http://localhost:3000/aidata", {
@@ -21,7 +20,7 @@ const Dashboard = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json(response);
         setDashboardData(data);
       }
     };
@@ -31,19 +30,17 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-
   return (
-    <div className="flex w-full h-screen overflow-hidden">
+    <div className="flex h-screen">
+      <aside className="w-72 flex-shrink-0">
+        <Header />
+      </aside>
 
-      <div className="w-[17%] h-full  flex-shrink-0">
-        <Header />   
-      </div>
-      <div className ="w-[83%] h-full overflow-y-auto">
+      <main className="flex-1 overflow-y-auto">
         <Outlet />
-      </div>
+      </main>
     </div>
-  )
-
+  );
 };
 
 export default Dashboard;

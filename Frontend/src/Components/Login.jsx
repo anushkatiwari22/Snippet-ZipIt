@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import UserContext from "../utils/UserContext";
 
@@ -23,19 +23,37 @@ const Login = () => {
     });
 
     const data = await response.json();
-    console.log(data);
     setObj(data);
-
-    //   if(obj?.question=="true"){
-    //    navigate("/dashboard")
-    //   }
-
-    if (data.success == "true") {
-      navigate("/questions");
-    }
-    //   else{
-    //   }
   };
+
+  useEffect(() => {
+    const handledashboard = async () => {
+      const resp = await fetch("http://localhost:3000/checkanswers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userid: obj?.userid,
+        }),
+      });
+
+      const response = await resp.json();
+      if(response.message=="true"){
+        navigate("/dashboard/home");
+      }
+      else{
+        navigate("/questions");
+      }
+    };
+
+    if(obj?.userid){
+      handledashboard();
+    }
+    // console.log(obj);
+    
+  },[obj?.userid]);
+
 
   return (
     <main className="bg-gray-50 px-4 md:px-8">

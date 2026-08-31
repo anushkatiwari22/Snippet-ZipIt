@@ -7,6 +7,10 @@ router
 .route("/aidata")
 .post(getAiData);
 
+router
+.route("/checkanswers")
+.post(checkData);
+
 async function getAiData(req,res) {
     
     //console.log(req.body);
@@ -17,8 +21,21 @@ async function getAiData(req,res) {
     console.log(response);
     
     res.json(response);
+}
 
-
+async function checkData( req , res ) {
+    const details = req.body ;
+    const user = await aireviewModel.findOne({userid : details.userid});
+    if(user){
+        res.json({
+            message : "true"
+        })
+    }
+    else{
+        res.json({
+            message : "false"
+        })
+    }
 }
 
 module.exports = router;

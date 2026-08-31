@@ -15,10 +15,7 @@ async function updateQuestionsInfo(req, res) {
 
     const questions = await questionsModel.create({data : data , userid  : userid});
     questions.save();
-
-    res.json({
-        success : "true"
-    });
+    res.send("done");
 }
 
 
