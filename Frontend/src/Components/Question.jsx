@@ -52,7 +52,7 @@ const Question = () => {
         ...prev , 
         question : "true"
       })) 
-      naviagte("/dashboard");
+      naviagte("/dashboard/home");
     }
   };
 
