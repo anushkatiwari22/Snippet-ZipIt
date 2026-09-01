@@ -30,6 +30,12 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
+  useEffect(() => {
+    console.log(dashboardData);
+    
+  },[dashboardData])
+
+
   return (
     <div className="flex h-screen overflow-hidden">
       <aside className="hidden md:block w-64 flex-shrink-0 border-r">
