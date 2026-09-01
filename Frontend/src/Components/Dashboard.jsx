@@ -30,6 +30,12 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
+  useEffect(() => {
+    console.log(dashboardData);
+    
+  },[dashboardData])
+
+
   return (
     <div className="flex h-screen">
       <aside className="w-72 flex-shrink-0">
