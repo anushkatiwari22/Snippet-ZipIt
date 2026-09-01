@@ -22,7 +22,7 @@ const navItemClass = ({ isActive }) =>
 
 const Header = () => {
   return (
-    <div className="font-display w-64 h-screen flex flex-col bg-white border-r border-gray-200 p-4">
+    <div className="font-display h-full flex flex-col bg-white p-4">
       <div className="flex items-center gap-2 mb-8 px-1">
         <img src={logo} alt="logo" className="h-8 w-8 object-contain" />
         <h1 className="text-lg font-semibold tracking-tight text-gray-900">Solvi</h1>

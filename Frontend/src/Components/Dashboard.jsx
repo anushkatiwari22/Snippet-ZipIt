@@ -31,12 +31,12 @@ const Dashboard = () => {
   }, [obj?.userid]);
 
   return (
-    <div className="flex h-screen">
-      <aside className="w-72 flex-shrink-0">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="hidden md:block w-64 flex-shrink-0 border-r">
         <Header />
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 min-w-0 overflow-y-auto">
         <Outlet />
       </main>
     </div>

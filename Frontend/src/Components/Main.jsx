@@ -1,36 +1,56 @@
-import { Bell } from "lucide-react";
-import SkillBar from './SkillBar'
+import { Bell, Quote } from "lucide-react";
+import SkillBar from "./SkillBar";
 import NextSteps from "./NextSteps";
-import { Quote } from "lucide-react";
 import DashboardCards from "./dashboardCards";
 
 const Main = () => {
   return (
     <div>
-      <div className="flex justify-between  p-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6">
         <div>
-          <h1 className="text-2xl font-bold">Good AfterNoon Rahul</h1>
-          <h3>Backend Developer . Advanced </h3>
+          <h1 className="text-xl md:text-2xl font-bold">
+            Good Afternoon Rahul
+          </h1>
+          <h3 className="text-sm md:text-base">
+            Backend Developer · Advanced
+          </h3>
         </div>
-        <div className="flex gap-10">
-          <button>
-            <Bell />
-          </button>
+
+        <button>
+          <Bell />
+        </button>
+      </div>
+
+      {/* Cards */}
+      <div className="p-4 md:p-10">
+        <DashboardCards />
+      </div>
+
+      {/* Skills + Next Steps */}
+      <div className="flex flex-col lg:flex-row gap-6 px-4 md:px-10">
+        <div className="w-full lg:w-3/5">
+          <SkillBar />
+        </div>
+
+        <div className="w-full lg:w-2/5">
+          <NextSteps />
         </div>
       </div>
-      <div className="p-10">
-        <DashboardCards/>
-      </div>
-      <div className="flex gap-10 ml-10 mr-10">
-        <div className="w-3/5"><SkillBar/></div>
-        <div className="w-2/5"> <NextSteps/> </div>
-      </div>
-      <div className=" flex flex-col gap-3 p-12">
-        <div className="flex gap-3">
-        <span> <Quote color="black" /></span>
-        <span className="text-gray-800 text-xl tracking-tighter font-semibold">From your coach</span>
+
+      {/* Coach Section */}
+      <div className="flex flex-col gap-3 p-4 md:p-12">
+        <div className="flex items-center gap-3">
+          <Quote />
+          <span className="text-gray-800 text-lg md:text-xl font-semibold">
+            From your coach
+          </span>
         </div>
-        <p className=" text-2xl font-semibold tracking-tight">Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga dolores doloribus mollitia! Similique, iste perferendis? Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis unde maior</p>
+
+        <p className="text-lg md:text-2xl font-semibold tracking-tight">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga dolores
+          doloribus mollitia! Similique, iste perferendis?
+        </p>
       </div>
     </div>
   );
