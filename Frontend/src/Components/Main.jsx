@@ -3,13 +3,18 @@ import SkillBar from './SkillBar'
 import NextSteps from "./NextSteps";
 import { Quote } from "lucide-react";
 import DashboardCards from "./dashboardCards";
+import { useContext } from "react";
+import UserContext from "../utils/UserContext";
 
-const Main = () => {
+const Main = (props) => {
+
+  const { obj } = useContext(UserContext);
+
   return (
     <div>
       <div className="flex justify-between  p-6">
         <div>
-          <h1 className="text-2xl font-bold">Good AfterNoon Rahul</h1>
+          <h1 className="text-2xl font-bold">Good AfterNoon {obj?.username}</h1>
           <h3>Backend Developer . Advanced </h3>
         </div>
         <div className="flex gap-10">
