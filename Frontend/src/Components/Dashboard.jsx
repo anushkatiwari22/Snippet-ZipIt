@@ -31,10 +31,10 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  useEffect(() => {
-    console.log(dashboardData);
+  // useEffect(() => {
+  //   console.log(dashboardData);
     
-  },[dashboardData])
+  // },[dashboardData])
 
   return dashboardData ? 
   (
@@ -44,7 +44,7 @@ const Dashboard = () => {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <Outlet {...dashboardData}/>
+        <Outlet context={dashboardData}/>
       </main>
     </div>
   ) : 

@@ -5,17 +5,21 @@ import { Quote } from "lucide-react";
 import DashboardCards from "./dashboardCards";
 import { useContext } from "react";
 import UserContext from "../utils/UserContext";
+import { useOutletContext } from "react-router-dom";
 
-const Main = (props) => {
+const Main = () => {
 
   const { obj } = useContext(UserContext);
+  const dashboardData = useOutletContext();
+  console.log(dashboardData);
+  
 
   return (
     <div>
       <div className="flex justify-between  p-6">
         <div>
-          <h1 className="text-2xl font-bold">Good AfterNoon {obj?.username}</h1>
-          <h3>Backend Developer . Advanced </h3>
+          <h1 className="text-2xl font-bold">Good AfterNoon, {obj?.username}</h1>
+          <h3>Future {dashboardData?.review?.careerProfile?.targetRole} , {dashboardData?.review?.careerProfile?.experienceLevel} </h3>
         </div>
         <div className="flex gap-10">
           <button>
