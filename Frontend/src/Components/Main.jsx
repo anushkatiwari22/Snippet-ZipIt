@@ -2,19 +2,21 @@ import { Bell, Quote } from "lucide-react";
 import SkillBar from "./SkillBar";
 import NextSteps from "./NextSteps";
 import DashboardCards from "./dashboardCards";
+import { useContext } from "react";
+import UserContext from "../utils/UserContext";
 
 const Main = () => {
+  
+  
+  const { obj } = useContext(UserContext);
+
   return (
     <div>
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">
-            Good Afternoon Rahul
-          </h1>
-          <h3 className="text-sm md:text-base">
-            Backend Developer · Advanced
-          </h3>
+          <h1 className="text-2xl font-bold">Good AfterNoon {obj?.username}</h1>
+          <h3>Backend Developer . Advanced </h3>
         </div>
 
         <button>
@@ -30,7 +32,7 @@ const Main = () => {
       {/* Skills + Next Steps */}
       <div className="flex flex-col lg:flex-row gap-6 px-4 md:px-10">
         <div className="w-full lg:w-3/5">
-          <SkillBar />
+          <SkillBar  />
         </div>
 
         <div className="w-full lg:w-2/5">

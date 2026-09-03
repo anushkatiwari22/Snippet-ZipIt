@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import UserContext from "../utils/UserContext";
 import Header from "./Header";
 import { Outlet } from "react-router-dom";
+import Shimmer from "./Shimmer";
 
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
@@ -35,18 +36,19 @@ const Dashboard = () => {
     
   },[dashboardData])
 
-
-  return (
-    <div className="flex h-screen overflow-hidden">
-      <aside className="hidden md:block w-64 flex-shrink-0 border-r">
+  return dashboardData ? 
+  (
+    <div className="flex h-screen">
+      <aside className="w-72 flex-shrink-0">
         <Header />
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-y-auto">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto">
+        <Outlet {...dashboardData}/>
       </main>
     </div>
-  );
+  ) : 
+  <Shimmer />
 };
 
 export default Dashboard;
