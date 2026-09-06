@@ -31,24 +31,38 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  useEffect(() => {
-    console.log(dashboardData);
+  // useEffect(() => {
+  //   console.log(dashboardData);
     
-  },[dashboardData])
+  // },[dashboardData])
 
-  return dashboardData ? 
-  (
+
+   return (
     <div className="flex h-screen">
       <aside className="w-72 flex-shrink-0">
         <Header />
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <Outlet {...dashboardData}/>
+        <Outlet context={dashboardData}/>
       </main>
     </div>
-  ) : 
-  <Shimmer />
+
+  )
+
+  // return dashboardData ? 
+  // (
+  //   <div className="flex h-screen">
+  //     <aside className="w-72 flex-shrink-0">
+  //       <Header />
+  //     </aside>
+
+  //     <main className="flex-1 overflow-y-auto">
+  //       <Outlet context={dashboardData}/>
+  //     </main>
+  //   </div>
+  // ) : 
+  // <Shimmer />
 };
 
 export default Dashboard;
