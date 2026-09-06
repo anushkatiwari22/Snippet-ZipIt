@@ -4,27 +4,32 @@ const mongoose = require("mongoose");
 const userModel = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 const questionsModel = require('../models/questionsModel');
+const { signupValidation, loginValidation } = require('../middleware/authValidation');
 require('dotenv').config();
 
 router
 .route("/signup")
-.post(postSignUp);
+.post(signupValidation ,postSignUp);
 
 
 router
 .route('/login')
-.post(postLogin);
+.post(loginValidation ,postLogin);
 
 
 async function postSignUp(req,res){
     const data = req.body;
-    console.log(data);
+    //console.log(data);
     if(data.password!=data.confirmpassword){
-        res.send("password and confirm password are not same");
+        res.json({
+            message : "password and confirm password does not match"
+        })
     }
     const founduser = await userModel.findOne({email : data.email});
     if(founduser){
-        res.send("user Already exists");
+        res.json({
+            message : "User Already Exsist"
+        });
     }
     else{
         const user =await  userModel.create({email : data.email , password : data.password , username : data.username});
@@ -32,7 +37,9 @@ async function postSignUp(req,res){
 
         // const questionInfo = questionsModel.create();
         // questionInfo.save();
-        res.send("success");
+        res.json({
+            message : "success"
+        });
     }
 }
 

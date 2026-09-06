@@ -1,5 +1,6 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {ToastContainer} from "react-toastify";
+import { handleError, handleSuccess } from "../utils/popups";
 
 export default function Signup() {
  
@@ -14,6 +15,12 @@ export default function Signup() {
     password: e.target.password.value,
     confirmpassword: e.target.confirmpassword.value,
   };
+
+    if(!userDetails.username || !userDetails.email || !userDetails.password || !userDetails.confirmpassword) {
+      handleError("All feilds are required");
+      return;
+    }
+
     const response = await fetch("http://localhost:3000/signup", {
       method: "POST",
       headers: {
@@ -22,8 +29,12 @@ export default function Signup() {
       body: JSON.stringify(userDetails),
     });
 
-    if (response.ok) {
+    if(response.ok) {
       navigate("/login");
+      handleSuccess("Successfully signed in");
+    } else {
+      const data = await response.json();
+      handleError(data.message || "Signup failed");
     }
   };
 
@@ -48,7 +59,7 @@ export default function Signup() {
                 id="username"
                 name="username"
                 placeholder="username"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -65,7 +76,7 @@ export default function Signup() {
                 id="email"
                 name="email"
                 placeholder="john@readymadeui.com"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -81,7 +92,7 @@ export default function Signup() {
                 id="password"
                 name="password"
                 placeholder="••••••••"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -97,7 +108,7 @@ export default function Signup() {
                 id="confirmpassword"
                 name="confirmpassword"
                 placeholder="••••••••"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -108,7 +119,7 @@ export default function Signup() {
                   id="tmc"
                   name="tmc"
                   type="checkbox"
-                  required
+                  // required
                   className="sr-only"
                 />
                 {/* Custom box */}
@@ -158,6 +169,7 @@ export default function Signup() {
             </Link>
           </div>
         </div>
+        <ToastContainer />
       </div>
     </main>
   );
