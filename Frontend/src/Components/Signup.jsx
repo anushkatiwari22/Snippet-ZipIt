@@ -13,18 +13,6 @@ export default function Signup() {
   const navigate = useNavigate();
   const {setVerificationObj} = useContext(UserContext);
 
-  // useEffect(() =>{
-  //    async function checkToken(){
-  //     const verifiedObj = await useVerfiyToken();
-  //     console.log(verifiedObj.success);
-      
-  //     if(verifiedObj && verifiedObj?.success == "true"){
-  //       navigate("/dashboard");
-  //     }
-  //   }
-
-  //   checkToken();
-  // },[]);
   const handleSignUp = async (e) => {
 
     e.preventDefault();
@@ -202,6 +190,7 @@ export default function Signup() {
             </Link>
           </div>
         </div>
+        <ToastContainer />
       </div>
     </main>
   );
