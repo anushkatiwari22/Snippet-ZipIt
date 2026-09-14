@@ -1,7 +1,7 @@
-const Main = ()=>{
+const Main = () => {
   return(
-    <h1>hello</h1>
+    <div>hello</div>
   )
 }
 
-export default Main ;
+export default Main;

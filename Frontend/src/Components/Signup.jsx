@@ -1,29 +1,73 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { handleError, handleSuccess } from "../utils/popups";
+import {toast} from "react-toastify";
+import useVerfiyToken from "../utils/useVerifyToken";
+import { useContext } from "react";
+import UserContext from "../utils/UserContext";
+import { useEffect } from "react";
+
 
 export default function Signup() {
- 
+
 
   const navigate = useNavigate();
+  const {setVerificationObj} = useContext(UserContext);
+
+  // useEffect(() =>{
+  //    async function checkToken(){
+  //     const verifiedObj = await useVerfiyToken();
+  //     console.log(verifiedObj.success);
+      
+  //     if(verifiedObj && verifiedObj?.success == "true"){
+  //       navigate("/dashboard");
+  //     }
+  //   }
+
+  //   checkToken();
+  // },[]);
   const handleSignUp = async (e) => {
-     e.preventDefault();
 
-  const userDetails = {
-    username: e.target.username.value.toLowerCase(),
-    email: e.target.email.value,
-    password: e.target.password.value,
-    confirmpassword: e.target.confirmpassword.value,
-  };
-    const response = await fetch("http://localhost:3000/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userDetails),
-    });
+    e.preventDefault();
 
-    if (response.ok) {
-      navigate("/login");
+    const userDetails = {
+      username: e.target.username.value.toLowerCase(),
+      email: e.target.email.value,
+      password: e.target.password.value,
+      confirmpassword: e.target.confirmpassword.value,
+    };
+
+    if (
+      !userDetails.username ||
+      !userDetails.email ||
+      !userDetails.password ||
+      !userDetails.confirmpassword
+    ) {
+      handleError("All feilds are required");
+      return;
+    }
+
+    try{
+      const response = await fetch("http://localhost:3000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userDetails),
+      });
+
+      const result = await response.json();
+      const {success , message , error} = result ;
+      if(success == "true"){
+        handleSuccess(message);
+        navigate("/login")
+      }
+      else if(success == "false"){
+        const details = error?.details[0].message;
+        handleError(details);
+      }
+    }
+    catch(error){
+      handleError(error);
     }
   };
 
@@ -48,7 +92,7 @@ export default function Signup() {
                 id="username"
                 name="username"
                 placeholder="username"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -65,7 +109,7 @@ export default function Signup() {
                 id="email"
                 name="email"
                 placeholder="john@readymadeui.com"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -81,7 +125,7 @@ export default function Signup() {
                 id="password"
                 name="password"
                 placeholder="••••••••"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -97,7 +141,7 @@ export default function Signup() {
                 id="confirmpassword"
                 name="confirmpassword"
                 placeholder="••••••••"
-                required
+                // required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -108,7 +152,7 @@ export default function Signup() {
                   id="tmc"
                   name="tmc"
                   type="checkbox"
-                  required
+                  // required
                   className="sr-only"
                 />
                 {/* Custom box */}

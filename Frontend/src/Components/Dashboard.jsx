@@ -4,6 +4,7 @@ import Header from "./Header";
 import { Outlet } from "react-router-dom";
 import Shimmer from "./Shimmer";
 
+// import Main from "./Main";
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
   const [dashboardData, setDashboardData] = useState();
@@ -31,13 +32,12 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  // useEffect(() => {
-  //   console.log(dashboardData);
+  useEffect(() => {
+    console.log(dashboardData);
     
-  // },[dashboardData])
+  },[dashboardData])
 
-
-   return (
+  return (
     <div className="flex h-screen">
       <aside className="w-72 flex-shrink-0">
         <Header />
@@ -47,7 +47,6 @@ const Dashboard = () => {
         <Outlet context={dashboardData}/>
       </main>
     </div>
-
   )
 
   // return dashboardData ? 

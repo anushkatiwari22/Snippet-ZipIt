@@ -6,8 +6,8 @@ const app = express();
 const cors = require('cors');
 const groqrouter = require('./controllers/groqcontroller');
 const answerRouter = require('./controllers/answersRouter')
-
-
+const authmiddleware = require("./middleware/authmiddleware");
+const cookieParser = require('cookie-parser');
 
 
 
@@ -15,9 +15,11 @@ app.use(express.json());
 app.use(express.urlencoded({extended : true}));
 app.use(cors({
     origin : "http://localhost:5173" ,
-     credentials: true
+    credentials: true
 }))
 connection();
+app.use(cookieParser());
+
 
 
 
@@ -25,6 +27,8 @@ app.use("/",authRouter);
 app.use("/",questionRouter);
 app.use('/' , groqrouter);
 app.use("/",answerRouter);
+app.use("/" , authmiddleware);
+
 
 app.listen(3000,() => {
     console.log("Server is listening at port 3000");
