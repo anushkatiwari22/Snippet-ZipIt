@@ -15,7 +15,7 @@ router
 function verifyuser(req , res){
     try{
         const token = req.cookies.token;
-        // console.log(token);
+        console.log(token);
         if(!token){
             res.json({
                 message : "unauthorized user" , 
@@ -44,13 +44,35 @@ function verifyuser(req , res){
     }
     catch(error){
         res.json({
-            error
+            message : error , 
+            success : "false"
+        })
+    }
+    
+}
+
+function logoutuser(req , res){
+    try{
+        res.clearCookie("token");
+        res.json({
+            message : "cleared cookie" , 
+            success : "true"
+        })
+    }
+    catch(error){
+        res.json({
+            message : error ,
+            success : "false"
         })
     }
 }
 
 
+
 function verify(token){
-    const verified = jwt.verify(token , process.env.SECRET_KEY);
+    const verified = jwt.verify(token , process.env.SECRET_ID);
+    // console.log("verified obj : ")
+    // console.log(verified);
     return verified;
 }
+module.exports = router;

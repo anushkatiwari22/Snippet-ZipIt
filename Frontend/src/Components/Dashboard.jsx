@@ -4,6 +4,7 @@ import Header from "./Header";
 import { Outlet } from "react-router-dom";
 import Shimmer from "./Shimmer";
 
+// import Main from "./Main";
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
   const [dashboardData, setDashboardData] = useState();
@@ -31,10 +32,10 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  // useEffect(() => {
-  //   console.log(dashboardData);
+  useEffect(() => {
+    console.log(dashboardData);
     
-  // },[dashboardData])
+  },[dashboardData])
 
   return (
     <div className="flex h-screen">

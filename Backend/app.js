@@ -8,7 +8,7 @@ const groqrouter = require('./controllers/groqcontroller');
 const answerRouter = require('./controllers/answersRouter')
 const authmiddleware = require("./middleware/authmiddleware");
 const cookieParser = require('cookie-parser');
-const progressRouter = require("./controllers/progressRoutes");
+const progressRouter = require('./controllers/progressRoutes');
 
 
 
@@ -19,6 +19,8 @@ app.use(cors({
     credentials: true
 }))
 connection();
+app.use(cookieParser());
+
 
 
 

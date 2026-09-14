@@ -1,13 +1,16 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Signup from './Components/Signup'
 import Login from './Components/Login'
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import UserContext from './utils/UserContext';
+import { ToastContainer } from 'react-toastify';
+import useVerfiyToken from './utils/useVerifyToken';
 
 
 
 const App = () => {
 
+  // const [isAuthenticated , setIsAuthenticated] = useState(false)
   const [verficationObj , setVerficationObj] = useState({});
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
