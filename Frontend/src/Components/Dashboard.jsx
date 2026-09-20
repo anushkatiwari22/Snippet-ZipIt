@@ -32,10 +32,10 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  useEffect(() => {
-    console.log(dashboardData);
+  // useEffect(() => {
+  //   console.log(dashboardData);
     
-  },[dashboardData])
+  // },[dashboardData])
 
   return (
     <div className="flex h-screen">

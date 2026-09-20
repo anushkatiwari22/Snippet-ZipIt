@@ -20,7 +20,8 @@ const Login = () => {
     };
 
     if(!enteredDetails.email || !enteredDetails.password){
-      handleError("All fields are required")
+      handleError("All fields are required");
+      return;
     }
 
     try{
