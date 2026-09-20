@@ -1,46 +1,59 @@
 import { Link, useNavigate } from "react-router-dom";
 import {ToastContainer} from "react-toastify";
 import { handleError, handleSuccess } from "../utils/popups";
+import { ToastContainer, toast } from "react-toastify";
+import { useContext } from "react";
+import UserContext from "../utils/UserContext";
 
 export default function Signup() {
- 
-
   const navigate = useNavigate();
+  const { setVerificationObj } = useContext(UserContext);
+
   const handleSignUp = async (e) => {
-     e.preventDefault();
+    e.preventDefault();
 
-  const userDetails = {
-    username: e.target.username.value.toLowerCase(),
-    email: e.target.email.value,
-    password: e.target.password.value,
-    confirmpassword: e.target.confirmpassword.value,
-  };
+    const userDetails = {
+      username: e.target.username.value.toLowerCase(),
+      email: e.target.email.value,
+      password: e.target.password.value,
+      confirmpassword: e.target.confirmpassword.value,
+    };
 
-    if(!userDetails.username || !userDetails.email || !userDetails.password || !userDetails.confirmpassword) {
-      handleError("All feilds are required");
+    if (
+      !userDetails.username ||
+      !userDetails.email ||
+      !userDetails.password ||
+      !userDetails.confirmpassword
+    ) {
+      handleError("All fields are required");
       return;
     }
 
-    const response = await fetch("http://localhost:3000/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userDetails),
-    });
+    try {
+      const response = await fetch("http://localhost:3000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userDetails),
+      });
 
-    if(response.ok) {
-      navigate("/login");
-      handleSuccess("Successfully signed in");
-    } else {
-      const data = await response.json();
-      handleError(data.message || "Signup failed");
+      if (response.ok) {
+        handleSuccess("Successfully signed up");
+        navigate("/login");
+      } else {
+        const data = await response.json();
+        handleError(data.message || "Signup failed");
+      }
+    } catch (err) {
+      handleError(err.message || "Something went wrong. Please try again.");
     }
   };
 
   return (
     <main className="px-4 md:px-8 min-h-screen flex flex-col items-center justify-center">
       <div className="max-w-md w-full">
+        <ToastContainer />
         <div className="p-6 rounded-lg bg-white border border-slate-300 shadow-xs md:p-6">
           <h1 className="text-slate-900 text-center text-2xl font-bold">
             Create an account
@@ -59,7 +72,7 @@ export default function Signup() {
                 id="username"
                 name="username"
                 placeholder="username"
-                // required
+                required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -76,7 +89,7 @@ export default function Signup() {
                 id="email"
                 name="email"
                 placeholder="john@readymadeui.com"
-                // required
+                required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -92,7 +105,7 @@ export default function Signup() {
                 id="password"
                 name="password"
                 placeholder="••••••••"
-                // required
+                required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -108,7 +121,7 @@ export default function Signup() {
                 id="confirmpassword"
                 name="confirmpassword"
                 placeholder="••••••••"
-                // required
+                required
                 className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
               />
             </div>
@@ -119,7 +132,7 @@ export default function Signup() {
                   id="tmc"
                   name="tmc"
                   type="checkbox"
-                  // required
+                  required
                   className="sr-only"
                 />
                 {/* Custom box */}
@@ -152,7 +165,7 @@ export default function Signup() {
             </div>
 
             <button
-              onClick={() => {}}
+              type="submit"
               className="w-full py-2 px-3.5 text-sm rounded-md font-semibold cursor-pointer tracking-wide text-white border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               Create an account
@@ -169,7 +182,6 @@ export default function Signup() {
             </Link>
           </div>
         </div>
-        <ToastContainer />
       </div>
     </main>
   );

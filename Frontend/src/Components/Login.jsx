@@ -21,6 +21,10 @@ const Login = () => {
       },
       body: JSON.stringify(enteredDetails),
     });
+    if(!enteredDetails.email || !enteredDetails.password){
+      handleError("All fields are required");
+      return;
+    }
 
     const data = await response.json();
     setObj(data);

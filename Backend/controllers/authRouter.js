@@ -19,10 +19,34 @@ router
 
 async function postSignUp(req,res){
     const data = req.body;
-    //console.log(data);
-    if(data.password!=data.confirmpassword){
-        res.json({
-            message : "password and confirm password does not match"
+    try{
+        if(data.password!=data.confirmpassword){
+            res.json({
+                success : "false" ,
+                message : "password and confirm password does not match"
+            })
+        }
+        const founduser = await userModel.findOne({email : data.email});
+        if(founduser){
+            res.json({
+                success : "false" ,
+                message : "User Already Exsist"
+            });
+        }
+        else{
+            const user =await  userModel.create({email : data.email , password : data.password , username : data.username});
+            user.save();
+            res.json({
+                success : "true" ,
+                message : "successfully signed in"
+            });
+        }
+    }
+    catch(error){
+        console.log("SIGNUP ERROR:", error);
+        res.status(500).json({
+            message : "Internal server error" , 
+            success :  "false"
         })
     }
     const founduser = await userModel.findOne({email : data.email});

@@ -18,7 +18,7 @@ async function getAiData(req,res) {
     console.log(details);
 
     const response = await aireviewModel.findOne({userid : details.userid});
-    console.log(response);
+    // console.log(response);
     
     res.json(response);
 }
