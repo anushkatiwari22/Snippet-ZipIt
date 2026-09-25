@@ -137,7 +137,7 @@ async function getResumeAnalysis(req, res) {
     })
         const aiData = await response.json();
         // console.log("GROQ RESPONSE:", aiData);
-        const ai_data = JSON.parse(aiData.choices[0]?.message.content) ;
+        const ai_data = JSON.parse(aiData?.choices[0]?.message?.content) ;
         
         res.json({
             response : ai_data

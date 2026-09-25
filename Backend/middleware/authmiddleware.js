@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const express =  require("express");
+const userModel = require("../models/userModel");
 const router = express.Router();
 
 router
@@ -12,7 +13,7 @@ router
 .route("/logout")
 .get(logoutuser);
 
-function verifyuser(req , res){
+async function verifyuser(req , res){
     try{
         const token = req.cookies.token;
         // console.log(token);
@@ -25,11 +26,12 @@ function verifyuser(req , res){
         else{
             if(verify(token)){
                 const verifiedObj = verify(token);
-                // console.log(verifiedObj.userid);
+                
+                const user = await userModel.findOne({username : verifiedObj.username});
                 
                 res.json({
-                    userid : verifiedObj.id, 
-                    username : verifiedObj.username,
+                    userid : user.id, 
+                    username : user.username,
                     message : "valid user" , 
                     success : "true"
                 })

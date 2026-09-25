@@ -16,7 +16,7 @@ const C = {
 // result cards cycle through these colours
 const cardColors = [C.pink, C.blue, C.green, C.cream];
 
-const FREE_LIMIT = 3; // analyses allowed before the Lock page shows
+const FREE_LIMIT = 3; // only used for the "free analyses left" card. Your `>= 3` check below decides the Lock
 
 const steps = [
   { title: "Upload", text: "Pick your resume as a PDF.", color: C.pink },
@@ -678,71 +678,47 @@ const ResumeAnalyser = () => {
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
-  const { obj } = useContext(UserContext);
+  const { obj, setObj } = useContext(UserContext);
 
-  // null = not loaded yet (or failed to load); never pretend it is 0
-  const [resumeAnalysisCount, setResumeAnalysisCount] = useState(null);
-  const [countError, setCountError] = useState(false);
-  const fileRef = useRef();
+  const [resumeAnalysisCount, setResumeAnalysisCount] = useState(0);
 
-  // read how many analyses this user has already used
+
   useEffect(() => {
     if (!obj?.userid) return;
 
     const getCount = async () => {
       try {
-        const response = await axios.post(
-          "http://localhost:3000/resumeanalysiscount",
-          { userid: obj.userid },
-        );
-        const raw = response?.data?.count;
-        if (raw === undefined || raw === null || Number.isNaN(Number(raw))) {
-          console.warn("Unexpected count response:", response?.data);
-          setCountError(true);
-          return;
-        }
-        setResumeAnalysisCount(Number(raw));
-        setCountError(false);
+        const response = await axios.post("http://localhost:3000/resumeanalysiscount", {
+          userid: obj.userid,
+        });
+        setResumeAnalysisCount(Number(response?.data?.count ?? 0));
       } catch (error) {
-        console.error(
-          "Count error:",
-          error?.response?.status,
-          error?.response?.data ?? error.message,
-        );
-        setCountError(true);
+        console.error("Count error:", error);
+        setResumeAnalysisCount(0);
       }
     };
 
     getCount();
-  }, [obj?.userid]);
+  }, [obj?.userid])
 
-  // save the new count, only called after a successful analysis
-  const saveCount = async (count) => {
-    try {
-      const res = await axios.post(
-        "http://localhost:3000/updateresumeanalysiscount",
-        { userid: obj.userid, count },
-      );
-      console.log(res?.data?.success);
-    } catch (error) {
-      console.error("Count update failed:", error);
+  useEffect(() => {
+    async function setCount() {
+      const response = await axios.post("http://localhost:3000/updateresumeanalysiscount",{
+        userid : obj.userid,
+        count : resumeAnalysisCount
+      })
+      console.log(response?.data?.success);
     }
-  };
+    setCount();
+  },[resumeAnalysisCount])
 
-  const canPick = !loading && !fileData;
+
+  const fileRef = useRef();
 
   // runs when the user picks a file
-  const handleFileUpload = async (e) => {
-    const file = e.target?.files?.[0]; // first selected file
+  const handelFileUpload = async (e) => {
+    const file = e.target?.files[0]; // first selected file
     if (!file) return; // user cancelled the dialog
-
-    if (resumeAnalysisCount === null) {
-      setMessage(
-        "We couldn't load your free analyses. Refresh the page and try again.",
-      );
-      e.target.value = "";
-      return;
-    }
 
     setFileName(file.name);
     setMessage("");
@@ -764,10 +740,6 @@ const ResumeAnalyser = () => {
 
       if (responseData && typeof responseData === "object") {
         setFileData(responseData);
-
-        const newCount = resumeAnalysisCount + 1;
-        setResumeAnalysisCount(newCount);
-        saveCount(newCount);
       } else {
         setMessage(
           typeof responseData === "string"
@@ -775,26 +747,15 @@ const ResumeAnalyser = () => {
             : "Could not analyse this file. Please try again.",
         );
       }
+      setResumeAnalysisCount(prev => prev + 1);
     } catch (error) {
-      console.error(
-        "Upload error:",
-        error?.response?.status,
-        error?.response?.data ?? error.message,
-      );
-      const serverMsg =
-        error?.response?.data?.message || error?.response?.data?.error;
-      setMessage(
-        typeof serverMsg === "string"
-          ? serverMsg
-          : error?.code === "ERR_NETWORK"
-            ? "Can't reach the server. Is the backend running on port 3000?"
-            : "Something went wrong while uploading. Please try again.",
-      );
+      console.error("Upload error:", error);
+      setMessage("Something went wrong while uploading. Please try again.");
     } finally {
-      setLoading(false); // stop the loader whether it worked or failed
-      if (fileRef.current) fileRef.current.value = ""; // allow re-picking the same file
+      setLoading(false); // stop the shimmer whether it worked or failed
     }
   };
+
 
   // resets everything so the user can upload a new resume
   const removeFile = () => {
@@ -808,16 +769,10 @@ const ResumeAnalyser = () => {
     }
   };
 
-  const openPicker = () => {
-    if (canPick) fileRef.current?.click();
-  };
+  // if (resumeAnalysisCount === null) return <Shimmer />; // avoids a flash of the upload UI
+  if (resumeAnalysisCount >= 3 && !fileData) return <Lock />;
 
-  if (resumeAnalysisCount >= FREE_LIMIT && !fileData) return <Lock />;
-
-  const triesLeft =
-    resumeAnalysisCount === null
-      ? null
-      : Math.max(FREE_LIMIT - resumeAnalysisCount, 0);
+  const triesLeft = Math.max(FREE_LIMIT - resumeAnalysisCount, 0); // display only
 
   return (
     <div
@@ -835,15 +790,6 @@ const ResumeAnalyser = () => {
         >
           Get insights and feedback on your resume.
         </p>
-
-        {/* hidden input stays mounted so the ref always works */}
-        <input
-          type="file"
-          ref={fileRef}
-          accept=".pdf, application/pdf, .doc, .docx"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
 
         <div className="mt-14 grid items-start gap-x-12 gap-y-14 lg:grid-cols-5">
         {/* Upload card: fixed height, so it never changes size */}
@@ -863,22 +809,11 @@ const ResumeAnalyser = () => {
             style={{ backgroundColor: C.green }}
           >
             <div
-              role={canPick ? "button" : undefined}
-              tabIndex={canPick ? 0 : -1}
-              onClick={openPicker}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  openPicker();
-                }
-              }}
-              className={`flex h-64 flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed px-4 text-center focus-visible:outline-none focus-visible:ring-2 ${
-                canPick ? "cursor-pointer" : ""
-              }`}
+              onClick={() => fileRef.current?.click()}
+              className="flex h-64 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed px-4 text-center"
               style={{
                 backgroundColor: C.cream,
                 borderColor: "rgba(23,23,26,0.3)",
-                "--tw-ring-color": C.ink,
               }}
             >
               {loading ? (
@@ -901,6 +836,14 @@ const ResumeAnalyser = () => {
                 </>
               ) : (
                 <>
+                  <input
+                    type="file"
+                    ref={fileRef}
+                    accept=".pdf, application/pdf, .doc, .docx"
+                    onChange={handelFileUpload}
+                    className="hidden"
+                  />
+
                   {message && (
                     <p
                       className="mb-4 max-w-sm rounded-2xl px-4 py-2 text-sm font-semibold"
@@ -938,7 +881,7 @@ const ResumeAnalyser = () => {
               Free analyses left
             </p>
             <p className="font-display mt-1 text-5xl font-extrabold tracking-tight">
-              {triesLeft ?? "–"}
+              {triesLeft}
               <span className="text-xl font-semibold" style={{ opacity: 0.6 }}>
                 {" "}
                 / {FREE_LIMIT}
@@ -951,19 +894,13 @@ const ResumeAnalyser = () => {
                   className="h-2.5 flex-1 rounded-full"
                   style={{
                     backgroundColor:
-                      triesLeft !== null && i < triesLeft
-                        ? C.yellow
-                        : "rgba(250,223,107,0.25)",
+                      i < triesLeft ? C.yellow : "rgba(250,223,107,0.25)",
                   }}
                 />
               ))}
             </div>
             <p className="mt-4 text-sm" style={{ opacity: 0.7 }}>
-              {countError
-                ? "Couldn't load your count. Check that the server is running."
-                : triesLeft === null
-                  ? "Checking your free analyses…"
-                  : "Go Premium for unlimited analyses."}
+              Go Premium for unlimited analyses.
             </p>
           </div>
 

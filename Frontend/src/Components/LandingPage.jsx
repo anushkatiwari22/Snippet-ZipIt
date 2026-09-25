@@ -9,6 +9,9 @@ export default function LandingPage() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+
+    const navigate = useNavigate();
+    const { setVerificationObj } = useContext(UserContext);
   };
 
   return (

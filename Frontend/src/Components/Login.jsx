@@ -1,6 +1,10 @@
 import { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import UserContext from "../utils/UserContext";
+import { handleError, handleSuccess } from "../utils/popups";
+import useVerfiyToken from "../utils/useVerifyToken"
+import axios from "axios";
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,24 +30,31 @@ const Login = () => {
       return;
     }
 
-    const data = await response.json();
-    setObj(data);
-  };
+    try{
+      const response = await axios.post("http://localhost:3000/login",enteredDetails,{ withCredentials : true });
+      const data = response?.data;
+      
+      if(data.success == "true") {
+        const confirmationObj = await useVerfiyToken();
+        setObj(confirmationObj);
+      } else {
+        handleError(data?.message);
+      }
+      
+
+    }
+    catch(error){
+      handleError(error);
+    }
+  }
 
   useEffect(() => {
     const handledashboard = async () => {
-      const resp = await fetch("http://localhost:3000/checkanswers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userid: obj?.userid,
-        }),
-      });
+      const response = await axios.post("http://localhost:3000/checkanswers",{userid : obj?.userid});
+      const data = response?.data;
 
-      const response = await resp.json();
-      if(response.message=="true"){
+      if(data.message=="true"){
+        handleSuccess("Successfully logged in")
         navigate("/dashboard/home");
       }
       else{
