@@ -8,6 +8,7 @@ const groqrouter = require('./controllers/groqcontroller');
 const answerRouter = require('./controllers/answersRouter')
 const authmiddleware = require("./middleware/authmiddleware");
 const cookieParser = require('cookie-parser');
+const progressRouter = require("./controllers/progressRoutes");
 
 
 
@@ -28,6 +29,7 @@ app.use("/",questionRouter);
 app.use('/' , groqrouter);
 app.use("/",answerRouter);
 app.use("/" , authmiddleware);
+app.use("/" , progressRouter);
 
 
 app.listen(3000,() => {

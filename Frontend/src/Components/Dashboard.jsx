@@ -22,7 +22,7 @@ const Dashboard = () => {
       });
 
       if (response.ok) {
-        const data = await response.json(response);
+        const data = await response.json();
         setDashboardData(data);
       }
     };
@@ -32,10 +32,10 @@ const Dashboard = () => {
     }
   }, [obj?.userid]);
 
-  useEffect(() => {
-    console.log(dashboardData);
+  // useEffect(() => {
+  //   console.log(dashboardData);
     
-  },[dashboardData])
+  // },[dashboardData])
 
   return (
     <div className="flex h-screen">
@@ -48,20 +48,6 @@ const Dashboard = () => {
       </main>
     </div>
   )
-
-  // return dashboardData ? 
-  // (
-  //   <div className="flex h-screen">
-  //     <aside className="w-72 flex-shrink-0">
-  //       <Header />
-  //     </aside>
-
-  //     <main className="flex-1 overflow-y-auto">
-  //       <Outlet context={dashboardData}/>
-  //     </main>
-  //   </div>
-  // ) : 
-  // <Shimmer />
 };
 
 export default Dashboard;
