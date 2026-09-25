@@ -10,7 +10,6 @@ import useVerfiyToken from './utils/useVerifyToken';
 
 const App = () => {
 
-  // const [isAuthenticated , setIsAuthenticated] = useState(false)
   const [verficationObj , setVerficationObj] = useState({});
   const navigate = useNavigate();
   const location = useLocation();

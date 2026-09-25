@@ -94,7 +94,7 @@ const Header = () => {
           <button
             type="button"
             onClick={handleLogout}
-            className={`${baseItem} text-[#17171A]/70 hover:bg-[#F6A9CB] hover:text-[#17171A]`}
+            className={`${baseItem} text-[#17171A]/70 hover:bg-[#F6A9CB] hover:text-[#17171A] cursor-pointer`}
           >
             <FontAwesomeIcon icon={faSignOut} className="w-4 text-center" />
             <span>Logout</span>

@@ -17,16 +17,6 @@ export default function LandingPage() {
 
     const navigate = useNavigate();
     const { setVerificationObj } = useContext(UserContext);
-
-    // useEffect(() => {
-    //   async function checkToken() {
-    //     const verifiedObj = await useVerfiyToken();
-    //     if (verifiedObj || verifiedObj?.success === "true") {
-    //       navigate("/dashboard");
-    //     }
-    //   }
-    //   checkToken();
-    // }, []);
   };
 
   return (
