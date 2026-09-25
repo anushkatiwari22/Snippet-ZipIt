@@ -9,11 +9,49 @@ import UserContext from './utils/UserContext';
 const App = () => {
 
   const [verficationObj , setVerficationObj] = useState({});
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+useEffect(() => {
+  const checkAuth = async () => {
+    const verifyObj = await verifyToken();
+
+    const path = location.pathname;
+    if(verifyObj && verifyObj?.success == "true") {
+      setVerficationObj(verifyObj);
+      if(path.includes('login') || path.includes('signup') || path == "/"){
+        navigate("/dashboard/home");
+      }
+    } else {
+      if(path === "/"){
+        navigate("/");
+      } else if(path.includes('signup')){
+        navigate("/signup");
+      } else {
+        navigate("/login");
+      }
+    }
+    setLoading(false);
+  }
+  checkAuth();
+},[]);
+
+async function verifyToken() {
+  const obj = await useVerfiyToken();
+  return obj;
+}
+
   return (
     <UserContext.Provider value = {{obj : verficationObj , setObj : setVerficationObj}}>
-      <div>
-        <Outlet />
-      </div>
+      <ToastContainer/>
+
+      {
+        loading ? (null) : (<>
+        <div><Outlet /></div>
+        </>)
+      }
+      
     </UserContext.Provider>
 
   )
