@@ -1,40 +1,61 @@
 import { Link, useNavigate } from "react-router-dom";
-import {ToastContainer} from "react-toastify";
 import { handleError, handleSuccess } from "../utils/popups";
+import {toast} from "react-toastify";
+import useVerfiyToken from "../utils/useVerifyToken";
+import { useContext } from "react";
+import UserContext from "../utils/UserContext";
+import { useEffect } from "react";
+
 
 export default function Signup() {
- 
+
 
   const navigate = useNavigate();
+  const {setVerificationObj} = useContext(UserContext);
+
   const handleSignUp = async (e) => {
-     e.preventDefault();
 
-  const userDetails = {
-    username: e.target.username.value.toLowerCase(),
-    email: e.target.email.value,
-    password: e.target.password.value,
-    confirmpassword: e.target.confirmpassword.value,
-  };
+    e.preventDefault();
 
-    if(!userDetails.username || !userDetails.email || !userDetails.password || !userDetails.confirmpassword) {
+    const userDetails = {
+      username: e.target.username.value.toLowerCase(),
+      email: e.target.email.value,
+      password: e.target.password.value,
+      confirmpassword: e.target.confirmpassword.value,
+    };
+
+    if (
+      !userDetails.username ||
+      !userDetails.email ||
+      !userDetails.password ||
+      !userDetails.confirmpassword
+    ) {
       handleError("All feilds are required");
       return;
     }
 
-    const response = await fetch("http://localhost:3000/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userDetails),
-    });
+    try{
+      const response = await fetch("http://localhost:3000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userDetails),
+      });
 
-    if(response.ok) {
-      navigate("/login");
-      handleSuccess("Successfully signed in");
-    } else {
-      const data = await response.json();
-      handleError(data.message || "Signup failed");
+      const result = await response.json();
+      const {success , message , error} = result ;
+      if(success == "true"){
+        handleSuccess(message);
+        navigate("/login")
+      }
+      else if(success == "false"){
+        const details = error?.details[0].message;
+        handleError(details);
+      }
+    }
+    catch(error){
+      handleError(error);
     }
   };
 
@@ -169,7 +190,7 @@ export default function Signup() {
             </Link>
           </div>
         </div>
-        <ToastContainer />
+        {/* <ToastContainer /> */}
       </div>
     </main>
   );
