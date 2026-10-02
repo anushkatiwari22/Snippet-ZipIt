@@ -1,6 +1,9 @@
 import { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import UserContext from "../utils/UserContext";
+import { handleError, handleSuccess } from "../utils/popups";
+import useVerfiyToken from "../utils/useVerifyToken"
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,22 +12,51 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    // console.log("Login clicked");
+
     const enteredDetails = {
       email: e.target.email.value,
       password: e.target.password.value,
     };
 
-    const response = await fetch("http://localhost:3000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(enteredDetails),
-    });
+    if(!enteredDetails.email || !enteredDetails.password){
+      handleError("All fields are required")
+    }
 
-    const data = await response.json();
-    setObj(data);
-  };
+    try{
+      const response = await fetch("http://localhost:3000/login", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(enteredDetails),
+      });
+
+      const data = await response.json();
+      
+      if(data.success == "true") {
+        const confirmationObj = await useVerfiyToken();
+        setObj(confirmationObj);
+        // handleSuccess(data?.message);
+      } else {
+        handleError(data?.message);
+      }
+      
+      // setObj(data);
+
+      // console.log("after setobj");
+      
+    }
+    catch(error){
+      console.error("LOGIN ERROR:", error);
+      handleError(error);
+    }
+  }
+
+  // useEffect(() => {
+  //   console.log(obj);
+  // },[obj])
 
   useEffect(() => {
     const handledashboard = async () => {
@@ -40,9 +72,11 @@ const Login = () => {
 
       const response = await resp.json();
       if(response.message=="true"){
+        handleSuccess("Successfully logged in")
         navigate("/dashboard/home");
       }
       else{
+        handleSuccess("Successfully logged in");
         navigate("/questions");
       }
     };
@@ -50,7 +84,6 @@ const Login = () => {
     if(obj?.userid){
       handledashboard();
     }
-    // console.log(obj);
     
   },[obj?.userid]);
 
@@ -77,7 +110,6 @@ const Login = () => {
                   id="email"
                   name="email"
                   placeholder="john@readymadeui.com"
-                  required
                   className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
                 />
               </div>
@@ -93,7 +125,6 @@ const Login = () => {
                   id="password"
                   name="password"
                   placeholder="••••••••"
-                  required
                   className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
                 />
               </div>
