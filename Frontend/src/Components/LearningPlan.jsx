@@ -101,9 +101,11 @@ export default function Learning() {
       return;
     }
     if(weekNumber >= totalWeeks){
-      setIdx(totalWeeks -1)
+      setIdx(0);
     }
-    setIdx(weekNumber - 1);
+    else{
+      setIdx(weekNumber - 1);
+    }
       setCompleted(false);
       setCompletedTasks([]);
   };
