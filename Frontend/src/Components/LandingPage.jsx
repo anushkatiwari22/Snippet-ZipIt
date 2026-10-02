@@ -9,6 +9,9 @@ export default function LandingPage() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+
+    const navigate = useNavigate();
+    const { setVerificationObj } = useContext(UserContext);
   };
 
   return (
@@ -79,8 +82,11 @@ export default function LandingPage() {
               <Link to="/signup"  className="bg-gradient-to-r from-[#ff517b] to-[#f83f6c] text-white text-sm font-bold px-8 py-3.5 rounded-full shadow-lg hover:brightness-105 active:scale-95 transition-all">
                 Sign up
               </Link>
-              <Link to="/login" className="border-2 border-[#f84a75] text-[#f84a75] bg-white/80 backdrop-blur-sm hover:bg-[#f84a75] hover:text-white text-sm font-bold px-8 py-3 rounded-full shadow transition-all">
-                Sign in
+              <Link
+                to="/login"
+                className="border-2 border-[#f84a75] text-[#f84a75] bg-white/80 backdrop-blur-sm hover:bg-[#f84a75] hover:text-white text-sm font-bold px-8 py-3 rounded-full shadow transition-all"
+              >
+                Log in
               </Link>
             </div>
           </div>

@@ -19,10 +19,33 @@ router
 
 async function postSignUp(req,res){
     const data = req.body;
-    //console.log(data);
-    if(data.password!=data.confirmpassword){
-        res.json({
-            message : "password and confirm password does not match"
+    try{
+        const founduser = await userModel.findOne({email : data.email});
+        if(founduser){
+            return res.json({
+                success : "false" ,
+                message : "User Already Exsist"
+            });
+        }
+        else if(data.password!=data.confirmpassword){
+            return res.json({
+                success : "false" ,
+                message : "password and confirm password does not match"
+            })
+        }
+        else{
+            const user =await  userModel.create({email : data.email , password : data.password , username : data.username});
+            user.save();
+            res.json({
+                success : "true" ,
+                message : "successfully signed in"
+            });
+        }
+    }
+    catch(error){
+        res.status(500).json({
+            message : "Internal server error" , 
+            success :  "false"
         })
     }
     const founduser = await userModel.findOne({email : data.email});
@@ -76,7 +99,7 @@ async function postLogin(req , res){
 }
 
 function getjwt(user){
-    const token = jwt.sign({id : user._id} , process.env.SECRET_ID);
+    const token = jwt.sign({username : user.username} , process.env.SECRET_ID);
     return token;
 }
 
