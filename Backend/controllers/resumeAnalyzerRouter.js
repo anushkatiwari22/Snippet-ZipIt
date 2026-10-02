@@ -26,9 +26,7 @@ router
 async function getResumeAnalysisCount(req, res) {
     try {
         const { userid } = req.body;
-        // console.log(userid);
         const resumeAnalysisCount = await userModel.findOne({_id : userid});
-        // console.log(resumeAnalysisCount);
         res.json({
             count : resumeAnalysisCount.resumeAnalysisCount
         });
@@ -44,7 +42,6 @@ async function getResumeAnalysisCount(req, res) {
 async function updateResumeAnalysisCount(req, res) {
     try {
         const { userid,count } = req.body;
-        // console.log(count);
         const updateCount = await userModel.findOneAndUpdate({_id : userid},{
             resumeAnalysisCount : count
         })
@@ -111,8 +108,6 @@ async function getResumeAnalysis(req, res) {
             areasOfImprovement,
             suggestedRewriteExamples
             `
-            // console.log("PROMPT:");
-            // console.log(prompt);
 
         const response = await fetch("https://api.groq.com/openai/v1/chat/completions" , {
         "method" : "POST" ,
@@ -136,7 +131,6 @@ async function getResumeAnalysis(req, res) {
         })
     })
         const aiData = await response.json();
-        // console.log("GROQ RESPONSE:", aiData);
         const ai_data = JSON.parse(aiData?.choices[0]?.message?.content) ;
         
         res.json({
