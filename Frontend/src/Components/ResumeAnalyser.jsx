@@ -565,6 +565,7 @@ const Hero = ({ score, summary, sectionCount }) => {
   );
 };
 
+// `onRemove` is optional: when it's not passed (previous analysis), the view is read-only
 const AnalysisView = ({ data, onRemove }) => {
   const { score, summary, sections } = parseAnalysis(data);
   const [activeKey, setActiveKey] = useState(null);
@@ -654,22 +655,145 @@ const AnalysisView = ({ data, onRemove }) => {
         </>
       )}
 
-      {/* Remove Button */}
-      <div className="flex justify-end pt-2">
-        <button
-          type="button"
-          onClick={onRemove}
-          className="rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:!bg-[#F6A9CB] hover:!text-[#17171A] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          style={{
-            backgroundColor: C.ink,
-            "--tw-ring-color": C.ink,
-            "--tw-ring-offset-color": C.yellow,
-          }}
-        >
-          Remove file
-        </button>
-      </div>
+      {/* Remove Button (only for the current analysis, not the read-only previous one) */}
+      {onRemove && (
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={onRemove}
+            className="rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:!bg-[#F6A9CB] hover:!text-[#17171A] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{
+              backgroundColor: C.ink,
+              "--tw-ring-color": C.ink,
+              "--tw-ring-offset-color": C.yellow,
+            }}
+          >
+            Remove file
+          </button>
+        </div>
+      )}
     </div>
+  );
+};
+
+/* ---------- previous analysis ----------
+   A short, read-only snapshot of the user's last trial.
+   "Review Full Analysis" expands into the normal AnalysisView (no Remove button). */
+
+const FEEDBACK_RE = /improv|suggest|recommend|weak|feedback|tip|missing/i;
+
+// grabs a few short feedback lines from the first list-of-sentences section
+const previewPoints = (sections, max = 3) => {
+  const lists = sections.filter(
+    (s) =>
+      Array.isArray(s.value) &&
+      s.value.length > 0 &&
+      s.value.every((v) => typeof v === "string"),
+  );
+  const preferred = lists.find((s) => FEEDBACK_RE.test(s.key));
+  const ordered = preferred
+    ? [preferred, ...lists.filter((l) => l !== preferred)]
+    : lists;
+
+  return {
+    label: ordered[0]?.label,
+    items: ordered.flatMap((s) => s.value).slice(0, max),
+  };
+};
+
+const PreviousAnalysis = ({ data }) => {
+  const [open, setOpen] = useState(false);
+  const { score, summary, sections } = parseAnalysis(data);
+  const { label, items } = previewPoints(sections);
+  const pct = score ? toPct(score.value) : 0;
+
+  return (
+    <section aria-label="Previous analysis">
+      <div
+        className="relative rounded-[2rem] p-6 sm:p-8"
+        style={{ backgroundColor: C.cream }}
+      >
+        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+          {score && (
+            <div className="shrink-0 text-center">
+              <Sticker color={ringColor(pct)} className="h-28 w-28 text-4xl">
+                {score.value}
+              </Sticker>
+              <p
+                className="mt-3 text-xs font-bold capitalize"
+                style={{ opacity: 0.65 }}
+              >
+                Previous {score.label}
+              </p>
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1 text-center sm:text-left">
+            <h2 className="font-display text-3xl font-extrabold leading-tight tracking-tight">
+              Your Previous Analysis
+            </h2>
+            <p className="mt-1 text-sm font-medium" style={{ opacity: 0.7 }}>
+              Here's what Solvi found in your last resume analysis.
+            </p>
+
+            {score && (
+              <span
+                className="mt-3 inline-block rounded-full px-3 py-1 text-xs font-bold"
+                style={{ backgroundColor: ringColor(pct) }}
+              >
+                {verdict(pct)}
+              </span>
+            )}
+
+            {summary && (
+              <div className="mt-4">
+                <Text text={summary} limit={200} />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {items.length > 0 && (
+          <div className="mt-6">
+            <p
+              className="mb-2 text-xs font-bold capitalize"
+              style={{ opacity: 0.65 }}
+            >
+              {label || "Key feedback"}
+            </p>
+            <div className="space-y-2">
+              {items.map((t, i) => (
+                <Row key={i} text={t} i={i} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-center sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            className="rounded-full px-6 py-3 text-sm font-semibold transition hover:!bg-[#F6A9CB] hover:!text-[#17171A] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{
+              backgroundColor: C.ink,
+              color: C.yellow,
+              "--tw-ring-color": C.ink,
+              "--tw-ring-offset-color": C.cream,
+            }}
+          >
+            {open ? "Hide Full Analysis" : "Review Full Analysis"}
+          </button>
+        </div>
+      </div>
+
+      {/* full, read-only view: same AnalysisView, no onRemove */}
+      {open && (
+        <div className="mx-auto mt-8 max-w-3xl">
+          <AnalysisView data={data} />
+        </div>
+      )}
+    </section>
   );
 };
 
@@ -679,6 +803,8 @@ const ResumeAnalyser = () => {
   const [fileName, setFileName] = useState("");
   const [message, setMessage] = useState("");
   const { obj, setObj } = useContext(UserContext);
+  const [ prevAnalysis, setPrevAnalysis ] = useState(null);
+  const [ isVisible, setIsVisible ] = useState(false);
 
   const [resumeAnalysisCount, setResumeAnalysisCount] = useState(0);
 
@@ -689,7 +815,7 @@ const ResumeAnalyser = () => {
     const getCount = async () => {
       try {
         const response = await axios.post("http://localhost:3000/resumeanalysiscount", {
-          userid: obj.userid,
+          userid: obj.userid
         });
         setResumeAnalysisCount(Number(response?.data?.count ?? 0));
       } catch (error) {
@@ -701,13 +827,42 @@ const ResumeAnalyser = () => {
     getCount();
   }, [obj?.userid])
 
+  // Fetch the analysis from the user's LAST completed trial (once per user).
+  // Visibility is decided from the fetched data, not from stale state.
+  // Dependency is NOT resumeAnalysisCount: re-fetching after a new analysis would
+  // replace the "previous" snapshot with the new one (the DB is already updated by then).
+  useEffect(() => {
+    if (!obj?.userid) return;
+
+    async function getPreviousAnalysis() {
+      try {
+        const response = await axios.post("http://localhost:3000/prevanalysis", {
+          userid: obj.userid,
+        });
+
+        const data = response?.data?.data?.resumeAnalysis;
+        const hasData =
+          data && typeof data === "object" && Object.keys(data).length > 0;
+
+        if (hasData) {
+          setPrevAnalysis(data);
+          setIsVisible(true);
+        }
+      } catch (error) {
+        console.error("Previous analysis error:", error);
+      }
+    }
+
+    getPreviousAnalysis();
+  }, [obj?.userid]);
+
   useEffect(() => {
     async function setCount() {
       const response = await axios.post("http://localhost:3000/updateresumeanalysiscount",{
         userid : obj.userid,
         count : resumeAnalysisCount
       })
-      console.log(response?.data?.success);
+      // console.log(response?.data?.success);
     }
     setCount();
   },[resumeAnalysisCount])
@@ -724,9 +879,9 @@ const ResumeAnalyser = () => {
     setMessage("");
     setLoading(true);
 
-    // send the file as multipart/form-data, backend reads it under the key "pdf"
     const formData = new FormData();
     formData.append("pdf", file);
+    formData.append("userid", obj?.userid);
 
     try {
       const response = await axios.post(
@@ -736,7 +891,6 @@ const ResumeAnalyser = () => {
 
       // the analysis object lives at response.data.response
       const responseData = response?.data?.response;
-      console.log("API Response:", responseData);
 
       if (responseData && typeof responseData === "object") {
         setFileData(responseData);
@@ -747,17 +901,18 @@ const ResumeAnalyser = () => {
             : "Could not analyse this file. Please try again.",
         );
       }
-      setResumeAnalysisCount(prev => prev + 1);
+      if(response?.data?.success == true) {
+        setResumeAnalysisCount(prev => prev + 1);
+      }
     } catch (error) {
       console.error("Upload error:", error);
       setMessage("Something went wrong while uploading. Please try again.");
     } finally {
-      setLoading(false); // stop the shimmer whether it worked or failed
+      setLoading(false); 
     }
   };
 
 
-  // resets everything so the user can upload a new resume
   const removeFile = () => {
     setFileData(null);
     setFileName("");
@@ -769,8 +924,7 @@ const ResumeAnalyser = () => {
     }
   };
 
-  // if (resumeAnalysisCount === null) return <Shimmer />; // avoids a flash of the upload UI
-  if (resumeAnalysisCount >= 3 && !fileData) return <Lock />;
+  if (resumeAnalysisCount >= FREE_LIMIT && !fileData) return <Lock />;
 
   const triesLeft = Math.max(FREE_LIMIT - resumeAnalysisCount, 0); // display only
 
@@ -932,6 +1086,20 @@ const ResumeAnalyser = () => {
         </div>
         </div>
 
+        {/* Current (new) analysis: right under the upload area */}
+        {fileData && (
+          <div className="mx-auto mt-20 max-w-3xl">
+            <AnalysisView data={fileData} onRemove={removeFile} />
+          </div>
+        )}
+
+        {/* Previous analysis (returning users only), below the upload section */}
+        {isVisible && prevAnalysis && (
+          <div className="mt-20">
+            <PreviousAnalysis data={prevAnalysis} />
+          </div>
+        )}
+
         {/* How it works */}
         {!fileData && (
           <div className="mt-16">
@@ -960,13 +1128,6 @@ const ResumeAnalyser = () => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {fileData && (
-          <div className="mx-auto mt-20 max-w-3xl">
-            <AnalysisView data={fileData} onRemove={removeFile} />
           </div>
         )}
       </div>

@@ -18,13 +18,6 @@ const Login = () => {
       password: e.target.password.value,
     };
 
-    const response = await fetch("http://localhost:3000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(enteredDetails),
-    });
     if(!enteredDetails.email || !enteredDetails.password){
       handleError("All fields are required");
       return;
@@ -58,6 +51,7 @@ const Login = () => {
         navigate("/dashboard/home");
       }
       else{
+        handleSuccess("Successfully logged in");
         navigate("/questions");
       }
     };
@@ -65,7 +59,6 @@ const Login = () => {
     if(obj?.userid){
       handledashboard();
     }
-    // console.log(obj);
     
   },[obj?.userid]);
 
@@ -92,7 +85,6 @@ const Login = () => {
                   id="email"
                   name="email"
                   placeholder="john@readymadeui.com"
-                  required
                   className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
                 />
               </div>
@@ -108,7 +100,6 @@ const Login = () => {
                   id="password"
                   name="password"
                   placeholder="••••••••"
-                  required
                   className="px-3 py-2.5 text-sm text-slate-900 rounded-md bg-white w-full outline-1 -outline-offset-1 outline-slate-300 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-600"
                 />
               </div>

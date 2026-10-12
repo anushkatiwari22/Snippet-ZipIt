@@ -9,6 +9,7 @@ const groqrouter = require('./controllers/groqcontroller');
 const answerRouter = require('./controllers/answersRouter')
 const authmiddleware = require("./middleware/authmiddleware");
 const resumeAnalyzerrouter = require("./controllers/resumeAnalyzerRouter");
+const projectRouter = require("./controllers/projectRouter");
 
 
 
@@ -19,6 +20,8 @@ app.use(cors({
     credentials: true
 }))
 connection();
+app.use(cookieParser());
+
 
 
 
@@ -28,6 +31,7 @@ app.use('/' , groqrouter);
 app.use("/",answerRouter);
 app.use("/" , authmiddleware);
 app.use("/",resumeAnalyzerrouter);
+app.use("/",projectRouter);
 
 
 app.listen(3000,() => {

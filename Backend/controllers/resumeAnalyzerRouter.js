@@ -4,6 +4,7 @@ const router = express.Router();
 const multer = require("multer");
 const userModel = require("../models/userModel");
 const { PDFParse } = require("pdf-parse");
+const resumeAnalyserModel = require("../models/resumeAnalyserModel");
 
 const upload = multer({
     storage: multer.memoryStorage()
@@ -21,6 +22,10 @@ router
 router
 .route("/analyze-pdf")
 .post(upload.single("pdf"),getResumeAnalysis);
+
+router
+.route("/prevanalysis")
+.post(getPreviousAnalysis);
 
 
 async function getResumeAnalysisCount(req, res) {
@@ -42,12 +47,20 @@ async function getResumeAnalysisCount(req, res) {
 async function updateResumeAnalysisCount(req, res) {
     try {
         const { userid,count } = req.body;
-        const updateCount = await userModel.findOneAndUpdate({_id : userid},{
-            resumeAnalysisCount : count
-        })
+        const updateCount = await userModel.findOneAndUpdate({_id : userid},
+            {
+                $set : {
+                    resumeAnalysisCount : count
+                }
+            },
+            {
+                returnCount: "after"
+            }
+        )
         res.json({
             success : "true"
         });
+
 
     } catch (error) {
         console.log(error);
@@ -60,6 +73,7 @@ async function updateResumeAnalysisCount(req, res) {
 async function getResumeAnalysis(req, res) {
     
     try{
+        const { userid } = req.body;
 
         const parser = new PDFParse({
             data : req.file.buffer
@@ -69,9 +83,10 @@ async function getResumeAnalysis(req, res) {
 
         
         const text = data.text;
-
+   
         if(text?.length < 100){
             return res.json({
+                success : false,
                 response : "Upload your resume again, possibly in a different format."
             })
         }
@@ -132,14 +147,40 @@ async function getResumeAnalysis(req, res) {
     })
         const aiData = await response.json();
         const ai_data = JSON.parse(aiData?.choices[0]?.message?.content) ;
+
         
+        const result = await resumeAnalyserModel.findOneAndUpdate(
+            {userid : userid},
+            {
+                $set : {
+                resumeAnalysis : ai_data
+            }
+            },
+            {
+                returnDocument: "after",
+                upsert : true
+            }
+            
+        )
+
         res.json({
+            success : true,
             response : ai_data
         })
     }
     catch(error) {
         console.log(error);
     }
+}
+
+async function getPreviousAnalysis(req, res) {
+    const { userid } = req.body;
+    const data = await resumeAnalyserModel.findOne({userid : userid});
+
+    res.json({
+        success : true,
+        data : data
+    })
 }
 
 module.exports = router;

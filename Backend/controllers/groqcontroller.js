@@ -180,7 +180,7 @@ Return ONLY valid JSON in exactly this structure:
     })
     const aiData = await response.json();
     // console.log(aiData.choices[0].message.content);
-    const ai_data = JSON.parse(aiData.choices[0]?.message.content) ;
+    const ai_data = JSON.parse(aiData.choices[0]?.message.content);
     const {userid} = req.body;
 
     const newdata = await aireviewModel.create({review : ai_data , userid : userid})
