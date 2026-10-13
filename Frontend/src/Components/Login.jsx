@@ -12,8 +12,6 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // console.log("Login clicked");
-
     const enteredDetails = {
       email: e.target.email.value,
       password: e.target.password.value,
@@ -38,14 +36,9 @@ const Login = () => {
       if(data.success == "true") {
         const confirmationObj = await useVerfiyToken();
         setObj(confirmationObj);
-        // handleSuccess(data?.message);
       } else {
         handleError(data?.message);
       }
-      
-      // setObj(data);
-
-      // console.log("after setobj");
       
     }
     catch(error){
@@ -54,9 +47,6 @@ const Login = () => {
     }
   }
 
-  // useEffect(() => {
-  //   console.log(obj);
-  // },[obj])
 
   useEffect(() => {
     const handledashboard = async () => {

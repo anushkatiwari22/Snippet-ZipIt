@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-//const questionsModel = require('../models/questionsModel');
 
 const userSchema = mongoose.Schema({
     username : {

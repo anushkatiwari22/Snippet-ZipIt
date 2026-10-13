@@ -1,5 +1,6 @@
 const express = require("express");
 const { progressModel } = require("../models/progressModel");
+const { learningQuizeModel } = require("../models/learningQuize");
 const router = express.Router();
 
 router.route("/saveprogress").post(saveProgress);
@@ -8,10 +9,10 @@ router.route("/getprogress").post(getprogress);
 
 router.route("/getweek").post(getweek);
 
+router.route("/checkquize").post(checkquize);
+
 async function saveProgress(req, res) {
   const { userid, week, completedTasks, allTasks } = req.body;
-  // console.log(completedTasks);
-  // console.log(allTasks);
   let progress = await progressModel.findOne({ userid });
   let completed = false;
   if (!progress) {
@@ -78,8 +79,8 @@ async function getprogress(req, res) {
   const { userid, week } = req.body;
   const progress = await progressModel.findOne({ userid });
   const requiredweek = progress?.progress.find((p) => p.week == week);
-  // console.log(requiredweek);
   const tasks = requiredweek?.completedTasks;
+  
   return res.json({
     tasks: tasks,
     week: progress?.currentweek,
@@ -87,14 +88,88 @@ async function getprogress(req, res) {
   });
 }
 
+async function getweek(req, res) {
+  try {
+    const { userid } = req.body;
 
-async function getweek(req , res){
-  const {userid} = req.body;
-  const progress = await progressModel.findOne({userid})
-  return res.json({
-    currentweek : progress?.currentweek
-  })
+    const progress = await progressModel.findOne({ userid });
+    const quizUser = await learningQuizeModel.findOne({ userid });
+
+    let quizPassed = false;
+
+    if (progress?.currentweek) {
+      const weekNumber = Number(progress.currentweek.split(" ")[1]) - 1;
+      const weekName = `Week ${weekNumber}`;
+
+      const weekAnswers = quizUser?.answers.find(
+        (item) => item.week === weekName
+      );
+
+      if (weekAnswers && weekAnswers.answers.length >= 10) {
+        const correctCount = weekAnswers.answers.filter(
+          (answer) => answer.correct === true
+        ).length;
+
+        quizPassed = correctCount >= 5;
+      }
+    }
+
+    return res.json({
+      currentweek: progress?.currentweek,
+      quizPassed,
+    });
+  } catch (error) {
+    console.error("getweek error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch current week",
+    });
+  }
 }
 
+async function checkquize(req, res) {
+  
+  try {
+    const { userid, week } = req.body;
+
+    const user = await learningQuizeModel.findOne({ userid });
+
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "Quiz record not found",
+      });
+    }
+
+    const weekAnswers = user.answers.find(
+      (item) => item.week === week
+    );
+
+    if (!weekAnswers || weekAnswers.answers.length < 10) {
+      return res.json({
+        success: true,
+        passed: false,
+        message: "Quiz not completed",
+      });
+    }
+
+    const correctCount = weekAnswers.answers.filter(
+      (answer) => answer.correct === true
+    ).length;
+
+    return res.json({
+      success: true,
+      passed: correctCount >= 5,
+      correctCount,
+      totalQuestions: 10,
+    });
+  } catch (error) {
+    console.error("checkquize error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check quiz",
+    });
+  }
+}
 
 module.exports = router;

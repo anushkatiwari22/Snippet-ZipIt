@@ -13,6 +13,7 @@ import AboutUs from "./Components/AboutUs.jsx";
 import ResumeAnalyser from "./Components/ResumeAnalyser.jsx";
 import LearningPlan from "./Components/LearningPlan.jsx";
 import Projects from "./Components/Projects.jsx";
+import LearningQuize from "./Components/LearningQuize.jsx";
 import "react-toastify/ReactToastify.css";
 
 const appRouter = createBrowserRouter([
@@ -60,6 +61,10 @@ const appRouter = createBrowserRouter([
             path: "projects",
             element: <Projects />,
           },
+          {
+            path : "learningquize/:week" ,
+            element : <LearningQuize />
+          }
         ],
       },
     ],

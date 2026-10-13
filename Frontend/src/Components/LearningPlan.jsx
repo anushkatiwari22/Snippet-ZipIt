@@ -1,18 +1,21 @@
 import { BookOpen, Code2, Target, Lock, Check } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import UserContext from "../utils/UserContext";
 import { useContext } from "react";
 import { handleError } from "../utils/popups";
+import axios from "axios";
 
 export default function Learning() {
+  const navigate = useNavigate();
   const { obj, setObj } = useContext(UserContext);
   const [completedTasks, setCompletedTasks] = useState([]);
   const [idx, setIdx] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [progresstasks, setProgresstasks] = useState([]);
-
+  const [checkQuize, setcheckQuize] = useState(false);
+  const [planCompleted, setPlanCompleted] = useState(false);
   const dashboardData = useOutletContext();
 
   const weekData = dashboardData?.review?.learningPlan[idx];
@@ -24,9 +27,7 @@ export default function Learning() {
   ];
 
   const handleCheck = async (task) => {
-
     setCompletedTasks((prevTasks) => {
-      console.log(prevTasks);
       if (!prevTasks.includes(task)) {
         return [...prevTasks, task];
       }
@@ -69,46 +70,94 @@ export default function Learning() {
     setCompleted(data.completed);
   }
 
-  const handleweek = () => {
-    if (completed == true) {
-      if (idx != 3) {
-        setIdx((prev) => prev + 1);
-        if(idx >= totalWeeks?.length){
-          setIdx(totalWeeks?.length -1)  
-        }
+  const handleweek = async () => {
+    try {
+      if (!completed) {
+        return handleError("Please complete this week first");
       }
-      setCompleted(false);
-      setCompletedTasks([]);
-    } else {
-      handleError("Please complete this week first");
-    }
-  };
 
-  const getweek = async () => {
-    const resp = await fetch("http://localhost:3000/getweek", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      const resp = await axios.post("http://localhost:3000/checkquize", {
         userid: obj?.userid,
-      }),
-    });
+        week: weekData?.week,
+      });
 
-    const data = await resp.json();
-    const weekNumber = Number(data.currentweek.split(" ")[1]);
-    if(weekNumber -1 == idx){
-      return;
+      if (resp.data.success === false) {
+        return handleError(
+          resp.data.message || "Please complete the quiz first",
+        );
+      }
+
+      if (resp.data.passed !== true) {
+        return handleError(
+          resp.data.message || "You need at least 5 correct answers out of 10",
+        );
+      }
+
+      if (idx < 3) {
+        setIdx((prev) => prev + 1);
+        setcheckQuize(false);
+        setCompleted(false);
+        setCompletedTasks([]);
+      }
+    } catch (error) {
+      console.error("Error checking quiz:", error);
+      handleError("Something went wrong. Please try again.");
     }
-    if(weekNumber >= totalWeeks){
-      setIdx(0);
-    }
-    else{
-      setIdx(weekNumber - 1);
-    }
-      setCompleted(false);
-      setCompletedTasks([]);
   };
+
+  useEffect(() => {
+    const getweek = async () => {
+      try {
+        if (!obj?.userid) return;
+
+        const resp = await fetch("http://localhost:3000/getweek", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userid: obj.userid,
+          }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok || !data.currentweek) {
+          handleError("Unable to fetch your learning plan");
+          return;
+        }
+
+        const weekNumber = Number(data.currentweek.split(" ")[1]);
+        const planLength = dashboardData?.review?.learningPlan?.length ?? 0;
+
+        if (weekNumber > planLength) {
+          setPlanCompleted(true);
+          return;
+        }
+
+        setPlanCompleted(false);
+
+        if (weekNumber - 1 === idx) return;
+
+        if (weekNumber > 1 && !data.quizPassed) {
+          handleError(
+            "Complete the previous week's quiz with more than 5 correct answers",
+          );
+          setIdx(weekNumber - 2);
+          return;
+        }
+
+        setIdx(weekNumber - 1);
+        setCompleted(false);
+        setCompletedTasks([]);
+      } catch (error) {
+        console.error("Error fetching week:", error);
+        handleError("Something went wrong while loading your plan");
+      }
+    };
+
+    getweek();
+  }, [obj?.userid]);
 
   useEffect(() => {
     console.log("useEffect is running");
@@ -119,21 +168,43 @@ export default function Learning() {
   }, [obj?.userid, weekData?.week]);
 
   const handledisable = (topic) => {
-     return (progresstasks || []).includes(topic);;
+    return (progresstasks || []).includes(topic);
   };
 
-  const handleprev = () => {
-    if (idx != 0) {
-      setIdx((prev) => prev - 1);
-    }
+  // navitage to quize
+  const startquize = () => {
+    navigate(`/dashboard/learningquize/${idx}`);
   };
 
-  if (!weekData) return <div className="min-h-screen flex items-center justify-center bg-[#FBF7EF] text-lg font-medium text-neutral-500">Loading...</div>;
+  if (planCompleted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FBF7EF] p-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-[#AEB86C] flex items-center justify-center mb-6">
+          <Check size={40} className="text-white" />
+        </div>
+
+        <h1 className="text-4xl font-extrabold text-neutral-900 mb-3">
+          Plan Completed!
+        </h1>
+
+        <p className="text-neutral-600 text-lg max-w-md">
+          You've completed all the weeks in your learning plan. Great work!
+        </p>
+      </div>
+    );
+  }
+
+  if (!weekData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FBF7EF] text-lg font-medium text-neutral-500">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 md:p-10 bg-[#FBF7EF]">
       <div className="max-w-6xl mx-auto">
-
         {/* Header */}
         <div className="flex flex-wrap justify-between items-start gap-6 mb-6">
           <div>
@@ -156,7 +227,9 @@ export default function Learning() {
             </div>
 
             <div>
-              <h3 className="text-xl font-bold mb-1 text-neutral-900">Expected outcome</h3>
+              <h3 className="text-xl font-bold mb-1 text-neutral-900">
+                Expected outcome
+              </h3>
               <p className="text-base text-neutral-800">
                 {weekData.expectedOutcome}
               </p>
@@ -173,23 +246,27 @@ export default function Learning() {
                 <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center">
                   <BookOpen className="text-neutral-800" size={18} />
                 </div>
-                <h2 className="text-2xl font-bold text-neutral-900">Topics to learn</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">
+                  Topics to learn
+                </h2>
               </div>
 
               <span className="px-3 py-1 rounded-full bg-white/70 text-neutral-800 text-sm font-medium">
-                {weekData.topics.length}
+                {weekData.topics?.length || 0}
               </span>
             </div>
 
             <div className="px-5 pb-5 space-y-2.5">
-              {weekData.topics.map((topic, index) => {
+              {(weekData.topics || []).map((topic, index) => {
                 const isChecked = completedTasks.includes(topic);
                 const isDisabled = handledisable(topic);
                 return (
                   <label
                     key={index}
                     className={`flex items-center gap-4 p-4 rounded-2xl bg-white/60 ${
-                      isDisabled ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:bg-white/80"
+                      isDisabled
+                        ? "cursor-not-allowed opacity-70"
+                        : "cursor-pointer hover:bg-white/80"
                     }`}
                   >
                     <input
@@ -206,7 +283,13 @@ export default function Learning() {
                           : "bg-white border-neutral-400"
                       }`}
                     >
-                      {isChecked && <Check size={14} className="text-white" strokeWidth={3} />}
+                      {isChecked && (
+                        <Check
+                          size={14}
+                          className="text-white"
+                          strokeWidth={3}
+                        />
+                      )}
                     </span>
                     <p className="text-neutral-900">{topic}</p>
                   </label>
@@ -222,23 +305,27 @@ export default function Learning() {
                 <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center">
                   <Code2 className="text-neutral-800" size={18} />
                 </div>
-                <h2 className="text-2xl font-bold text-neutral-900">Practice activities</h2>
+                <h2 className="text-2xl font-bold text-neutral-900">
+                  Practice activities
+                </h2>
               </div>
 
               <span className="px-3 py-1 rounded-full bg-white/70 text-neutral-800 text-sm font-medium">
-                {weekData.practiceActivities.length}
+                {weekData.practiceActivities?.length || 0}
               </span>
             </div>
 
             <div className="px-5 pb-5 space-y-2.5">
-              {weekData.practiceActivities.map((activity, index) => {
+              {(weekData.practiceActivities || []).map((activity, index) => {
                 const isChecked = completedTasks.includes(activity);
                 const isDisabled = handledisable(activity);
                 return (
                   <label
                     key={index}
                     className={`flex items-center gap-4 p-4 rounded-2xl bg-white/60 ${
-                      isDisabled ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:bg-white/80"
+                      isDisabled
+                        ? "cursor-not-allowed opacity-70"
+                        : "cursor-pointer hover:bg-white/80"
                     }`}
                   >
                     <input
@@ -255,7 +342,13 @@ export default function Learning() {
                           : "bg-white border-neutral-400"
                       }`}
                     >
-                      {isChecked && <Check size={14} className="text-white" strokeWidth={3} />}
+                      {isChecked && (
+                        <Check
+                          size={14}
+                          className="text-white"
+                          strokeWidth={3}
+                        />
+                      )}
                     </span>
                     <p className="text-neutral-900">{activity}</p>
                   </label>
@@ -272,7 +365,10 @@ export default function Learning() {
               <Lock size={18} className="text-neutral-600" />
             </div>
             {completed ? (
-              <button className="px-5 py-2 rounded-full bg-neutral-900 text-white font-semibold hover:bg-neutral-800">
+              <button
+                className="px-5 py-2 rounded-full bg-neutral-900 text-white font-semibold hover:bg-neutral-800"
+                onClick={startquize}
+              >
                 Start my quiz
               </button>
             ) : (
@@ -292,22 +388,6 @@ export default function Learning() {
               disabled={idx === dashboardData?.review?.learningPlan?.length - 1}
             >
               Next week
-            </button>
-            <button
-              className="px-5 py-2.5 rounded-full bg-[#F7C56C] text-neutral-900 font-semibold hover:bg-[#f5ba4b]"
-              onClick={getweek}
-            >
-              Current week
-            </button>
-            <button
-              className={`px-5 py-2.5 rounded-full font-semibold transition-colors ${
-                idx === 0
-                  ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                  : "bg-neutral-900 text-white hover:bg-neutral-800"
-              }`}
-              onClick={handleprev}
-            >
-              Previous week
             </button>
             <button
               className="px-5 py-2.5 rounded-full bg-[#AEB86C] text-white font-semibold hover:bg-[#9ea75c]"
