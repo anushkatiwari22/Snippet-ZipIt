@@ -13,10 +13,9 @@ router
 .route("/logout")
 .get(logoutuser);
 
-async function verifyuser(req , res){
+function verifyuser(req , res){
     try{
         const token = req.cookies.token;
-        // console.log(token);
         if(!token){
             res.json({
                 message : "unauthorized user" , 
@@ -27,11 +26,9 @@ async function verifyuser(req , res){
             if(verify(token)){
                 const verifiedObj = verify(token);
                 
-                const user = await userModel.findOne({username : verifiedObj.username});
-                
                 res.json({
-                    userid : user.id, 
-                    username : user.username,
+                    userid : verifiedObj.id, 
+                    username : verifiedObj.username,
                     message : "valid user" , 
                     success : "true"
                 })
@@ -73,8 +70,6 @@ function logoutuser(req , res){
 
 function verify(token){
     const verified = jwt.verify(token , process.env.SECRET_ID);
-    // console.log("verified obj : ")
-    // console.log(verified);
     return verified;
 }
 module.exports = router;

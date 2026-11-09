@@ -14,8 +14,6 @@ router
 async function getAiData(req,res) {
     
     const details = req.body;
-    console.log(details);
-
     const response = await aireviewModel.findOne({userid : details.userid});
     
     res.json(response);

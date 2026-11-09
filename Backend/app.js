@@ -11,6 +11,9 @@ const authmiddleware = require("./middleware/authmiddleware");
 const resumeAnalyzerrouter = require("./controllers/resumeAnalyzerRouter");
 const projectRouter = require("./controllers/projectRouter");
 const profileRouter = require("./controllers/profileRouter")
+const progressRouter = require('./controllers/progressRoutes');
+const learningquizeRouter = require('./controllers/learningquizeRouter');
+const nextlearningplan = require('./controllers/nextlearningplan')
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
@@ -23,6 +26,7 @@ app.use(
 connection();
 app.use(cookieParser());
 
+
 app.use("/", authRouter);
 app.use("/", questionRouter);
 app.use("/", groqrouter);
@@ -31,7 +35,11 @@ app.use("/", authmiddleware);
 app.use("/", resumeAnalyzerrouter);
 app.use("/", projectRouter);
 app.use("/", profileRouter);
+app.use("/", progressRouter);
+app.use("/", learningquizeRouter);
+app.use("/", nextlearningplan);
 
-app.listen(3000, () => {
-  console.log("Server is listening at port 3000");
+
+app.listen(3000,() => {
+    console.log("Server is listening at port 3000");
 });

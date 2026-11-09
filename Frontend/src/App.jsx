@@ -10,7 +10,9 @@ import useVerfiyToken from './utils/useVerifyToken';
 
 const App = () => {
 
+  // const [isAuthenticated , setIsAuthenticated] = useState(false)
   const [verficationObj , setVerficationObj] = useState({});
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,6 +35,7 @@ useEffect(() => {
         navigate("/login");
       }
     }
+    setLoading(false);
   }
   checkAuth();
 },[]);
@@ -45,9 +48,13 @@ async function verifyToken() {
   return (
     <UserContext.Provider value = {{obj : verficationObj , setObj : setVerficationObj}}>
       <ToastContainer/>
-      <div> 
-        <Outlet />
-      </div>
+
+      {
+        loading ? (null) : (<>
+        <div><Outlet /></div>
+        </>)
+      }
+      
     </UserContext.Provider>
 
   )

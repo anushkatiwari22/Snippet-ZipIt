@@ -11,9 +11,10 @@ import {
   faPhone,
   faRoad,
   faSignOut,
+  faTableCellsLarge,
   faUser,
 } from "@fortawesome/free-solid-svg-icons";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
 // Theme (same as the Lock page):
@@ -55,7 +56,7 @@ const Header = () => {
     <div className="font-display flex h-full flex-col border-r border-[#17171A]/10 bg-[#FFF6E0] p-4">
       <div className="mb-8 flex items-center gap-2 px-2">
         <img src={logo} alt="logo" className="h-8 w-8 object-contain" />
-        <h1 className="text-lg font-bold tracking-tight text-[#17171A]">
+        <h1 className="text-lg font-semibold tracking-tight text-gray-900">
           Solvi
         </h1>
       </div>

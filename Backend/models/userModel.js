@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-//const questionsModel = require('../models/questionsModel');
 
 const userSchema = mongoose.Schema({
     username : {
@@ -25,6 +24,6 @@ const userSchema = mongoose.Schema({
     }
 } , {timestamps : true});
 
-const userModel = new mongoose.model("userModel" , userSchema);
+const userModel =  mongoose.model("userModel" , userSchema);
 
 module.exports = userModel;

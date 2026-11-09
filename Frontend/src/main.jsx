@@ -17,6 +17,11 @@ import TechPulse from "./Components/TechPulse.jsx";
 import Profile from "./Components/Profile.jsx";
 import "react-toastify/ReactToastify.css";
 import ChangePassword from "./Components/ChangePassword.jsx";
+import LearningQuize from "./Components/LearningQuize.jsx";
+import "react-toastify/ReactToastify.css";
+import NextMonthPlan from "./Components/NextMonthPlan.jsx"
+import Contact from "./Components/Contact.jsx";
+import NotFound from "./Components/NotFound.jsx";
 
 const appRouter = createBrowserRouter([
   {
@@ -52,6 +57,10 @@ const appRouter = createBrowserRouter([
             element: <AboutUs />,
           },
           {
+            path : "contact" ,
+            element: <Contact/>
+          },
+          {
             path: "resume-analyser",
             element: <ResumeAnalyser />,
           },
@@ -64,19 +73,19 @@ const appRouter = createBrowserRouter([
             element: <Projects />,
           },
           {
-            path : "techpulse",
-            element : <TechPulse />
-          },
+            path : "nextmonthplan",
+            element : <NextMonthPlan/>
+          } ,
           {
-            path : "profile",
-            element : <Profile />
-          },
-          {
-            path : "changepassword",
-            element : <ChangePassword />
+            path : "learningquize/:week" ,
+            element : <LearningQuize />
           }
         ],
       },
+      {
+        path : "*" , 
+        element : <NotFound/>
+      }
     ],
   },
 ]);
