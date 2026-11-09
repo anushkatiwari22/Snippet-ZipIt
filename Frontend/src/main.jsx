@@ -75,10 +75,18 @@ const appRouter = createBrowserRouter([
           {
             path : "nextmonthplan",
             element : <NextMonthPlan/>
-          } ,
+          },
           {
             path : "learningquize/:week" ,
             element : <LearningQuize />
+          },
+          {
+            path: "techpulse",
+            element: <TechPulse />
+          },
+          {
+            path: "profile",
+            element: <Profile />
           }
         ],
       },

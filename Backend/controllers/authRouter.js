@@ -112,7 +112,7 @@ async function getInfo(req, res) {
 }
 
 function getjwt(user){
-    const token = jwt.sign({username : user.username} , process.env.SECRET_ID);
+    const token = jwt.sign({username : user.username, id : user._id} , process.env.SECRET_ID);
     return token;
 }
 

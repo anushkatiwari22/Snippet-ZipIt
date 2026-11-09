@@ -29,7 +29,7 @@ const Projects = () => {
         userid: obj?.userid,
       });
 
-      setProjectData(response?.data?.currentProjects?.projects ?? []);
+      setProjectData(response?.data?.currentProjects ?? []);
     }
 
     async function getSelectedProject() {
