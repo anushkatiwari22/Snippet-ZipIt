@@ -5,6 +5,7 @@ const router = express.Router();
 require("dotenv").config();
 
 router.route("/getDashboard").post(getDashboard);
+// router.route("/updatedashboard").post(updateDashboard);
 
 async function getDashboard(req, res) {
   const { data } = req.body;

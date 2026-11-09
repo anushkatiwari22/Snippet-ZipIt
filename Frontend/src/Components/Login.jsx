@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import UserContext from "../utils/UserContext";
 import { handleError, handleSuccess } from "../utils/popups";
 import useVerfiyToken from "../utils/useVerifyToken"
+import axios from "axios";
 
 
 const Login = () => {
@@ -18,20 +19,13 @@ const Login = () => {
     };
 
     if(!enteredDetails.email || !enteredDetails.password){
-      handleError("All fields are required")
+      handleError("All fields are required");
+      return;
     }
 
     try{
-      const response = await fetch("http://localhost:3000/login", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(enteredDetails),
-      });
-
-      const data = await response.json();
+      const response = await axios.post("http://localhost:3000/login",enteredDetails,{ withCredentials : true });
+      const data = response?.data;
       
       if(data.success == "true") {
         const confirmationObj = await useVerfiyToken();
@@ -40,28 +34,19 @@ const Login = () => {
         handleError(data?.message);
       }
       
+
     }
     catch(error){
-      console.error("LOGIN ERROR:", error);
       handleError(error);
     }
   }
 
-
   useEffect(() => {
     const handledashboard = async () => {
-      const resp = await fetch("http://localhost:3000/checkanswers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userid: obj?.userid,
-        }),
-      });
+      const response = await axios.post("http://localhost:3000/checkanswers",{userid : obj?.userid});
+      const data = response?.data;
 
-      const response = await resp.json();
-      if(response.message=="true"){
+      if(data.message=="true"){
         handleSuccess("Successfully logged in")
         navigate("/dashboard/home");
       }

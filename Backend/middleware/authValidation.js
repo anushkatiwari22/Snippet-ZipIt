@@ -9,7 +9,6 @@ function signupValidation(req, res, next) {
     })
 
     const { error } = schema.validate(req.body);
-    console.log(error);
         if(error) {
         return res.status(400).json({
             message : "please fill the credentials according to the requirement" ,
@@ -26,7 +25,7 @@ function loginValidation(req, res, next) {
         password : joi.string().min(3).max(8).required(),
     })
     const { error } = schema.validate(req.body);
-    console.log(error);
+    
     if(error) {
         return res.status(400).json({
             message : "bad request" ,

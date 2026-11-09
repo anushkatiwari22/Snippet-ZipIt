@@ -23,10 +23,6 @@ useEffect(() => {
   }
 }, [obj?.userid]);
 
-  // useEffect(() => {
-  //   console.log(dashboardData);
-    
-  // },[dashboardData])
 
   return (
     <div className="flex h-screen">
@@ -35,10 +31,10 @@ useEffect(() => {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <Outlet context={dashboardData}/>
+        <Outlet context={dashboardData} />
       </main>
     </div>
-  )
+  );
 };
 
 export default Dashboard;

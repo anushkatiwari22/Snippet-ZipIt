@@ -12,6 +12,7 @@ router
 .post(checkData);
 
 async function getAiData(req,res) {
+    
     const details = req.body;
     const response = await aireviewModel.findOne({userid : details.userid});
     

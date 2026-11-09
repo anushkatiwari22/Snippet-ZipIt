@@ -17,16 +17,6 @@ export default function LandingPage() {
 
     const navigate = useNavigate();
     const { setVerificationObj } = useContext(UserContext);
-
-    // useEffect(() => {
-    //   async function checkToken() {
-    //     const verifiedObj = await useVerfiyToken();
-    //     if (verifiedObj || verifiedObj?.success === "true") {
-    //       navigate("/dashboard");
-    //     }
-    //   }
-    //   checkToken();
-    // }, []);
   };
 
   return (
@@ -103,7 +93,7 @@ export default function LandingPage() {
                 to="/login"
                 className="border-2 border-[#f84a75] text-[#f84a75] bg-white/80 backdrop-blur-sm hover:bg-[#f84a75] hover:text-white text-sm font-bold px-8 py-3 rounded-full shadow transition-all"
               >
-                Sign in
+                Log in
               </Link>
             </div>
           </div>

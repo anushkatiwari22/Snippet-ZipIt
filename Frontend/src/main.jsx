@@ -5,7 +5,6 @@ import App from "./App.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Signup from "./Components/Signup.jsx";
 import Login from "./Components/Login.jsx";
-import Main from "./Components/Main.jsx";
 import LandingPage from "./Components/LandingPage.jsx";
 import Question from "./Components/Question.jsx";
 import Dashboard from "./Components/Dashboard.jsx";
@@ -13,6 +12,11 @@ import AboutUs from "./Components/AboutUs.jsx";
 import ResumeAnalyser from "./Components/ResumeAnalyser.jsx";
 import LearningPlan from "./Components/LearningPlan.jsx";
 import Projects from "./Components/Projects.jsx";
+import DashboardOverview from "./Components/DashboardOverview.jsx";
+import TechPulse from "./Components/TechPulse.jsx";
+import Profile from "./Components/Profile.jsx";
+import "react-toastify/ReactToastify.css";
+import ChangePassword from "./Components/ChangePassword.jsx";
 import LearningQuize from "./Components/LearningQuize.jsx";
 import "react-toastify/ReactToastify.css";
 import NextMonthPlan from "./Components/NextMonthPlan.jsx"
@@ -46,7 +50,7 @@ const appRouter = createBrowserRouter([
         children: [
           {
             path: "home",
-            element: <Main />,
+            element: <DashboardOverview />,
           },
           {
             path: "about",
