@@ -3,11 +3,11 @@ import { useContext } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faBoltLightning,
   faFile,
   faHouse,
   faInfo,
   faLightbulb,
-  faMessage,
   faPhone,
   faRoad,
   faSignOut,
@@ -79,9 +79,9 @@ const Header = () => {
             <FontAwesomeIcon icon={faLightbulb} className="w-4 text-center" />
             <span>Projects</span>
           </NavLink>
-          <NavLink to="/mock-interview" className={navItemClass}>
-            <FontAwesomeIcon icon={faMessage} className="w-4 text-center" />
-            <span>Mock Interview</span>
+          <NavLink to="/dashboard/techpulse" className={navItemClass}>
+            <FontAwesomeIcon icon={faBoltLightning} className="w-4 text-center" />
+            <span>TechPulse</span>
           </NavLink>
         </div>
 

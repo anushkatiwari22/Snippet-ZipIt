@@ -13,7 +13,10 @@ import ResumeAnalyser from "./Components/ResumeAnalyser.jsx";
 import LearningPlan from "./Components/LearningPlan.jsx";
 import Projects from "./Components/Projects.jsx";
 import DashboardOverview from "./Components/DashboardOverview.jsx";
+import TechPulse from "./Components/TechPulse.jsx";
+import Profile from "./Components/Profile.jsx";
 import "react-toastify/ReactToastify.css";
+import ChangePassword from "./Components/ChangePassword.jsx";
 
 const appRouter = createBrowserRouter([
   {
@@ -60,6 +63,18 @@ const appRouter = createBrowserRouter([
             path: "projects",
             element: <Projects />,
           },
+          {
+            path : "techpulse",
+            element : <TechPulse />
+          },
+          {
+            path : "profile",
+            element : <Profile />
+          },
+          {
+            path : "changepassword",
+            element : <ChangePassword />
+          }
         ],
       },
     ],

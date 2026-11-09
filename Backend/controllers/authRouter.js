@@ -16,6 +16,10 @@ router
 .route('/login')
 .post(loginValidation ,postLogin);
 
+router
+.route("/userinfo")
+.post(getInfo);
+
 
 async function postSignUp(req,res){
     const data = req.body;
@@ -86,6 +90,24 @@ async function postLogin(req , res){
             message : "Internal Server Error" , 
             success : "false"
         })
+    }
+}
+
+async function getInfo(req, res) {
+    try {
+        const { userid } = req.body;
+
+        const response = await userModel.findOne({_id : userid})
+        res.json({
+            success : true,
+            username : response?.username,
+            email : response?.email,
+            pfp : response?.pfp
+        })
+    }
+    catch(error) {
+        console.log(error);
+        res.status(500).json({ success: false });
     }
 }
 

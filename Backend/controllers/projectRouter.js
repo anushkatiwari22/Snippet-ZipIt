@@ -166,10 +166,10 @@ async function getCurrentProjects(req, res) {
 
     const response = await aireviewModel.findOne({ userid: userid });
 
-    // console.log(response?.review?.projects?.projects);
+    // console.log(response?.review?.projects);
     res.json({
       success: true,
-      currentProjects: response?.review?.projects?.projects,
+      currentProjects: response?.review?.projects,
     });
   } catch (error) {
     res.status(500).json({ success: false });

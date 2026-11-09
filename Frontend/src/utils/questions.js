@@ -39,7 +39,7 @@ const questions = [
             "Docker",
             "AWS / Cloud"
         ],
-        
+        multiple: true
     },
 
     {
@@ -78,7 +78,8 @@ const questions = [
             "Technical Interviews",
             "Communication & Behavioral Interviews",
             "Consistency & Time Management"
-        ]
+        ],
+        multiple: true
     },
 
     {
@@ -90,7 +91,8 @@ const questions = [
             "Practice Problems",
             "Reading Documentation",
             "A Combination of Methods"
-        ]
+        ],
+        multiple: true
     },
 
     {

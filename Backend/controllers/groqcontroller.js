@@ -5,6 +5,7 @@ const router = express.Router();
 require('dotenv').config();
 
 router.route("/getDashboard").post(getDashboard);
+// router.route("/updatedashboard").post(updateDashboard);
 
 async function getDashboard(req, res) {
   const { data } = req.body;
@@ -192,6 +193,13 @@ Return ONLY valid JSON in exactly this structure:
     })
     
 }
+
+// async function updateDashboard(req, res) {
+//   try {
+//     const {userid, learningPlan} = req.body;
+    
+//   }
+// }
 
 
 module.exports = router;

@@ -28,7 +28,8 @@ const Projects = () => {
       const response = await axios.post("http://localhost:3000/currentprojects", {
         userid: obj?.userid,
       });
-      setProjectData(response?.data?.currentProjects ?? []);
+
+      setProjectData(response?.data?.currentProjects?.projects ?? []);
     }
 
     async function getSelectedProject() {

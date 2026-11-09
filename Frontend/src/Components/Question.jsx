@@ -108,8 +108,11 @@ const Question = () => {
                     setOptionArray((prev) =>
                       prev.filter((option) => option != value),
                     );
-                  } else {
-                    setOptionArray((prev) => [...prev, value]);
+                  } else if(questions[currQuestion].multiple) {
+                      setOptionArray((prev) => [...prev, value]);
+                  }
+                  else {
+                    setOptionArray([value]);
                   }
                 }}
                 className={`group w-full max-w-md rounded-2xl border px-5 py-3 text-left font-medium shadow-sm transition-all duration-200 hover:-translate-y-1 active:scale-[0.98] cursor-pointer ${

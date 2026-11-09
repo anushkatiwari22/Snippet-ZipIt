@@ -2,33 +2,44 @@ import { useContext, useEffect, useState } from "react";
 import UserContext from "../utils/UserContext";
 import Header from "./Header";
 import { Outlet } from "react-router-dom";
+import axios from "axios";
+
 
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
   const [dashboardData, setDashboardData] = useState();
 
   useEffect(() => {
-    const getDashboard = async () => {
-      const response = await fetch("http://localhost:3000/aidata", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userid: obj?.userid,
-        }),
+  if (!obj?.userid) return;
+
+  const getDashboard = async () => {
+    try {
+      const response = await axios.post("http://localhost:3000/aidata", {
+        userid: obj?.userid,
       });
+      const data = response.data;
+      setDashboardData(data);
 
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardData(data);
+
+      const lp = data?.review?.learningPlan;
+      if (Array.isArray(lp) && lp.length > 4) { 
+        const nextWeeks = lp.slice(4, 8);  
+        const updated = await axios.post("http://localhost:3000/updatedashboard", {
+          userid: obj?.userid,
+          learningPlan: nextWeeks,
+        });
+        setDashboardData(updated.data);        
       }
-    };
-
-    if (obj?.userid) {
-      getDashboard();
+    } catch (error) {
+      console.error("getDashboard error:", error);
     }
-  }, [obj?.userid]);
+  };
+
+  if(obj?.userid != undefined) {
+    getDashboard();
+  }
+}, [obj?.userid]);
+
 
   return (
     <div className="flex h-screen">

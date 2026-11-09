@@ -15,6 +15,10 @@ const userSchema = mongoose.Schema({
         type : String ,
         required : true
     },
+    pfp : {
+        type : String,
+        default : 'https://res.cloudinary.com/irwmd8f2/image/upload/f_auto,q_auto/pfp_ht7iz3'
+    },
     resumeAnalysisCount : {
         type : Number,
         default : 0

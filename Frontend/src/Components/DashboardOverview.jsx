@@ -4,6 +4,7 @@ import UserContext from "../utils/UserContext";
 import Shimmer from "./Shimmer";
 import { useEffect } from "react";
 import { useState } from "react";
+import axios from "axios";
 
 const qoutes = [
   "It's a hit, if it made your eyes lit 🔥",
@@ -37,7 +38,6 @@ const qoutes = [
   "Be patient. Your breakthrough is compiling ⏳✨",
 ];
 
-// Same theme as the sidebar, Lock page and Resume Analyser
 const C = {
   yellow: "#FADF6B",
   pink: "#F6A9CB",
@@ -178,7 +178,7 @@ const ListRow = ({ lead, color, title, text, tag }) => (
   </div>
 );
 
-/* ---------- page ---------- */
+
 
 const DashboardOverview = () => {
   const outletData = useOutletContext();
@@ -197,7 +197,6 @@ const DashboardOverview = () => {
       clearInterval(qoutesInterval);
     };
   }, []);
-  console.log(data);
 
   if (!data) return <Shimmer />;
 
@@ -234,6 +233,9 @@ const DashboardOverview = () => {
 
           <div className="flex items-center gap-3">
             <span className="hidden text-sm font-bold sm:block">{username}</span>
+            {
+              
+            }
             <span
               className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-extrabold"
               style={{ backgroundColor: C.ink, color: C.yellow }}
