@@ -1,177 +1,183 @@
 import UserContext from "../utils/UserContext";
 import { useContext, useState, useEffect } from "react";
 import axios from "axios";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { handleError, handleSuccess } from "../utils/popups";
+
+const API = "http://localhost:3000";
 
 const LearningQuize = () => {
   const { week } = useParams();
   const { obj } = useContext(UserContext);
+  const navigate = useNavigate();
 
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState("");
-  const [disabled, setDisabled] = useState(false);
-  const [checkingProgress , setCheckingProgress] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [showResult, setShowResult] = useState(false);
   const [results, setResults] = useState([]);
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
-  const [loadingResult, setLoadingResult] = useState(false);
-  const navigate = useNavigate();
+  const [passMark, setPassMark] = useState(null);
+  const [passed, setPassed] = useState(false);
+  const [attempted, setAttempted] = useState(0);
+  const [error, setError] = useState("");
 
-const getquize = async () => {
-  try {
-    const resp = await axios.post("http://localhost:3000/getquize", {
-      userid: obj?.userid,
-      week: week,
-    });
+  const isLast = currentQuestion === data.length - 1;
 
-    setData(resp.data.quiz);
-    setCurrentQuestion(0);
-    setSelectedOption("");
-    setDisabled(false);
-    setShowResult(false);
-    setResults([]);
-    setScore(0);
-    setTotalQuestions(0);
-    setCheckingProgress(false);
-  } catch (error) {
-    handleError(error.response?.data?.message || "Failed to load quiz");
+const loadResult = async () => {
+  const resp = await axios.post(`${API}/showresult`, { userid: obj?.userid, week });
+
+  if (resp.data.success) {
+    setResults(resp.data.results);
+    setScore(resp.data.score);
+    setTotalQuestions(resp.data.totalQuestions);
+    setPassMark(resp.data.passMark ?? null);
+    setPassed(Boolean(resp.data.passed));
+    setAttempted(resp.data.attempted ?? resp.data.totalQuestions);
+    setShowResult(true);
+
+    if (resp.data.passed) {
+      try {
+        await axios.post(`${API}/checkquize`, {
+          userid: obj?.userid,
+          week: `Week ${Number(week) + 1}`,
+        });
+      } catch (e) {
+        handleError("Passed, but could not unlock the next week");
+      }
+    }
   }
 };
 
   useEffect(() => {
-    if (obj?.userid) {
-      getquize();
-    }
+    if (!obj?.userid || week === undefined) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setShowResult(false);
+
+        const quizResp = await axios.post(`${API}/getquize`, {
+          userid: obj.userid,
+          week,
+        });
+        const quiz = quizResp.data.quiz || [];
+
+        const progressResp = await axios.post(`${API}/getquestion`, {
+          userid: obj.userid,
+          week,
+        });
+        const lastSaved = Number(progressResp.data.currentQuestion); 
+
+        if (cancelled) return;
+
+        setData(quiz);
+        setSelectedOption("");
+
+        if (quiz.length > 0 && lastSaved >= quiz.length - 1) {
+          await loadResult();
+        } else {
+          setCurrentQuestion(lastSaved + 1);
+        }
+      } catch (error) {
+        if (!cancelled) {
+            const msg = error.response?.data?.message || "Failed to load quiz";
+            setError(msg);
+          handleError(error.response?.data?.message || "Failed to load quiz");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [obj?.userid, week]);
 
-  const handlecheck = (option) => {
-    if (disabled) return;
-    setSelectedOption(option);
+  const saveAnswer = async () => {
+    try {
+      await axios.post(`${API}/saveoption`, {
+        questionIndex: currentQuestion,
+        userid: obj?.userid,
+        option: selectedOption,
+        week,
+      });
+    } catch (error) {
+      if (error.response?.status !== 409) throw error;
+    }
   };
 
-  const saveoption = async () => {
+  const handleNext = async () => {
     if (selectedOption === "") {
       handleError("Select an option first");
       return;
     }
-
-    if (disabled) return;
+    if (saving) return;
 
     try {
-      const resp = await axios.post("http://localhost:3000/saveoption", {
-        questionIndex: currentQuestion,
-        userid: obj?.userid,
-        option: selectedOption,
-        week: week,
-      });
+      setSaving(true);
+      await saveAnswer();
 
-      if (resp.data.success) {
-        handleSuccess("Answer saved");
-        setDisabled(true);
+      if (isLast) {
+        await loadResult();
+      } else {
+        setCurrentQuestion((prev) => prev + 1);
+        setSelectedOption("");
       }
     } catch (error) {
       handleError(error.response?.data?.message || "Failed to save answer");
-    }
-  };
-
-  const showresult = async () => {
-    try {
-      setLoadingResult(true);
-      setCheckingProgress(true);
-
-      const resp = await axios.post("http://localhost:3000/showresult", {
-        userid: obj?.userid,
-        week: week,
-      });
-
-      if (resp.data.success) {
-        setResults(resp.data.results);
-        setScore(resp.data.score);
-        setTotalQuestions(resp.data.totalQuestions);
-        setShowResult(true);
-      }
-    } catch (error) {
-      handleError(error.response?.data?.message || "Failed to fetch results");
     } finally {
-      setCheckingProgress(false);
-      setLoadingResult(false);
+      setSaving(false);
     }
   };
 
-  
-  const reattempt = async()=>{
-     try {
-      const resp = await axios.post(
-        "http://localhost:3000/reattempt",
-        {
-          userid: obj?.userid,
-          week: `Week ${Number(week) + 1}`,
-        }
-      );
+  const reattempt = async () => {
+    try {
+      const resp = await axios.post(`${API}/reattempt`, {
+        userid: obj?.userid,
+        week: `Week ${Number(week) + 1}`,
+      });
 
       if (resp.data.success) {
         setCurrentQuestion(0);
         setSelectedOption("");
-        setDisabled(false);
         setShowResult(false);
         setResults([]);
         setScore(0);
         setTotalQuestions(0);
-
-        await getquize();
+        handleSuccess("Quiz restarted");
       }
     } catch (error) {
-      handleError(
-        error.response?.data?.message || "Failed to restart quiz"
-      );
+      handleError(error.response?.data?.message || "Failed to restart quiz");
     }
-  }
-
-useEffect(() => {
-  if (!obj?.userid || !week || data.length === 0) return;
-
-  async function getweek() {
-    try {
-      const resp = await axios.post(
-        "http://localhost:3000/getquestion",
-        {
-          userid: obj.userid,
-          week,
-        }
-      );
-
-      if (resp.data.success) {
-        const lastSaved = Number(resp.data.currentQuestion);
-
-        // -1 means no answer has been saved yet.
-        const nextQuestion =
-          lastSaved === -1
-            ? 0
-            : Math.min(lastSaved + 1, data.length - 1);
-            if(lastSaved == data.length -1){
-              await showresult();
-            }
-            else{
-              setCurrentQuestion(nextQuestion);
-            }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  getweek();
-}, [obj?.userid, week, data.length]);
+  };
 
   const redirection = () => {
     navigate("/dashboard/learning-plan");
   };
 
-  if (checkingProgress || data.length === 0) {
+  if (error) {
+  return (
+    <div className="min-h-screen flex flex-col gap-4 justify-center items-center">
+      <p className="text-red-600">{error}</p>
+      <button onClick={redirection} className="px-6 py-3 rounded-2xl bg-amber-400 font-semibold">
+        Back to learning plan
+      </button>
+    </div>
+  );
+}
+
+  if (loading || data.length === 0) {
     return (
       <div className="min-h-screen flex justify-center items-center">
         Loading...
@@ -179,20 +185,34 @@ useEffect(() => {
     );
   }
 
-
-
-  // Display results instead of the quiz on the same page
   if (showResult) {
+    const skipped = totalQuestions - attempted;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 p-6">
         <div className="mx-auto max-w-3xl rounded-3xl bg-white p-8 shadow-xl">
-          <h1 className="mb-4 text-3xl font-bold text-gray-800">
-            Quiz Results
-          </h1>
+          <h1 className="mb-4 text-3xl font-bold text-gray-800">Quiz Results</h1>
 
-          <p className="mb-8 text-xl font-semibold text-green-700">
+          <p className="mb-2 text-xl font-semibold text-green-700">
             Score: {score}/{totalQuestions}
           </p>
+
+          <p
+            className={`mb-8 font-medium ${
+              passed ? "text-green-700" : "text-red-600"
+            }`}
+          >
+            {passed
+              ? "You passed. You can move on to the next week."
+              : `You need at least ${passMark ?? "the pass mark"} correct answers to move on. Reattempt the quiz to try again.`}
+          </p>
+
+          {skipped > 0 && (
+            <p className="mb-6 rounded-xl bg-amber-100 p-4 text-amber-900">
+              {skipped} question{skipped > 1 ? "s were" : " was"} not answered.
+              Reattempt the quiz to answer all questions.
+            </p>
+          )}
 
           <div className="space-y-6">
             {results.map((item) => (
@@ -229,18 +249,25 @@ useEffect(() => {
                 </p>
               </div>
             ))}
-            <button
-              onClick={redirection}
-              className="bg-amber-400 p-4 rounded-2xl w-35"
-            >
-              Next
-            </button>
+
+            <div className="flex flex-wrap gap-3">
               <button
-              onClick={reattempt}
-              className="bg-amber-400 p-4 rounded-2xl w-35"
-            >
-              Reattempt
-            </button>
+                onClick={redirection}
+                className={`px-6 py-4 rounded-2xl font-semibold ${
+                  passed ? "bg-amber-400" : "bg-gray-200"
+                }`}
+              >
+                Back to learning plan
+              </button>
+              <button
+                onClick={reattempt}
+                className={`px-6 py-4 rounded-2xl font-semibold ${
+                  passed ? "bg-gray-200" : "bg-amber-400"
+                }`}
+              >
+                Reattempt
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -280,8 +307,9 @@ useEffect(() => {
           {question.options.map((option, index) => (
             <button
               key={index}
-              disabled={disabled}
-              onClick={() => handlecheck(option)}
+              type="button"
+              disabled={saving}
+              onClick={() => setSelectedOption(option)}
               className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200
                 ${
                   selectedOption === option
@@ -297,49 +325,14 @@ useEffect(() => {
             </button>
           ))}
         </div>
-
-        {/* Navigation */}
-        <div className="flex justify-between mt-10 gap-3">
+        <div className="flex justify-end mt-10">
           <button
-            disabled={currentQuestion === 0}
-            onClick={() => {
-              setCurrentQuestion((prev) => prev - 1);
-              setSelectedOption("");
-              setDisabled(false);
-            }}
-            className="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+            onClick={handleNext}
+            disabled={saving || selectedOption === ""}
+            className="px-8 py-3 rounded-lg bg-green-500 text-white font-semibold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Previous
+            {saving ? "Saving..." : isLast ? "Submit Quiz" : "Next"}
           </button>
-
-          <button
-            onClick={saveoption}
-            disabled={disabled || selectedOption === ""}
-            className="px-6 py-2 rounded-lg bg-pink-200 hover:bg-pink-300 disabled:opacity-50"
-          >
-            Save
-          </button>
-
-          {currentQuestion === data.length - 1 ? (
-            <button
-              className="px-6 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
-              onClick={showresult}
-              disabled={loadingResult}
-            >
-              {loadingResult ? "Loading..." : "Submit Quiz"}
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setCurrentQuestion((prev) => prev + 1);
-                setSelectedOption("");
-                setDisabled(false);
-              }}
-              className="px-6 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
-            >
-              Next
-            </button>
-          )}
         </div>
       </div>
     </div>

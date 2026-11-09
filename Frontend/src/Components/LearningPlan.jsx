@@ -1,10 +1,8 @@
 import { BookOpen, Code2, Target, Lock, Check } from "lucide-react";
-import { useEffect } from "react";
-import { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useEffect, useState, useContext } from "react";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import UserContext from "../utils/UserContext";
-import { useContext } from "react";
-import { handleError } from "../utils/popups";
+import { handleError, handleSuccess } from "../utils/popups";
 import axios from "axios";
 
 export default function Learning() {
@@ -16,9 +14,12 @@ export default function Learning() {
   const [progresstasks, setProgresstasks] = useState([]);
   const [checkQuize, setcheckQuize] = useState(false);
   const [planCompleted, setPlanCompleted] = useState(false);
+  const location = useLocation();
+  const [reviewMode, setReviewMode] = useState(Boolean(location.state?.review));
   const dashboardData = useOutletContext();
 
-  const weekData = dashboardData?.review?.learningPlan[idx];
+  const [error, setError] = useState("");
+  const weekData = dashboardData?.review?.learningPlan?.[idx];
   const totalWeeks = dashboardData?.review?.learningPlan?.length;
 
   const allTasks = [
@@ -37,35 +38,42 @@ export default function Learning() {
   };
 
   async function saveprogress() {
-    const resp = await fetch("http://localhost:3000/saveprogress", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const newTasks = completedTasks.filter(
+      (t) => !progresstasks.includes(t)
+    );
+
+    if (newTasks.length === 0) {
+      return handleError("Tick at least one new task to save");
+    }
+
+    try {
+      const resp = await axios.post("http://localhost:3000/saveprogress", {
         userid: obj?.userid,
         week: weekData?.week,
-        completedTasks: completedTasks,
+        completedTasks: newTasks,
         allTasks: allTasks,
-      }),
-    });
-    const data = await resp.json();
-    setCompleted(data.completed);
+      });
+
+      const data = resp.data;
+
+      setCompleted(data.completed);
+      await getprogress();
+      setCompletedTasks([]);
+      handleSuccess("Progress saved");
+    } catch (error) {
+      console.error("Error saving progress:", error);
+      handleError("Could not save your progress");
+    }
   }
 
   async function getprogress() {
-    const resp = await fetch("http://localhost:3000/getprogress", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userid: obj?.userid,
-        week: weekData?.week,
-      }),
+    const resp = await axios.post("http://localhost:3000/getprogress", {
+      userid: obj?.userid,
+      week: weekData?.week,
     });
 
-    const data = await resp.json();
+    const data = resp.data;
+
     setProgresstasks(data.tasks || []);
     setCompleted(data.completed);
   }
@@ -83,25 +91,37 @@ export default function Learning() {
 
       if (resp.data.success === false) {
         return handleError(
-          resp.data.message || "Please complete the quiz first",
+          resp.data.message || "Please complete the quiz first"
         );
       }
 
       if (resp.data.passed !== true) {
         return handleError(
-          resp.data.message || "You need at least 5 correct answers out of 10",
+          resp.data.message || "You haven't passed this week's quiz yet"
         );
       }
 
-      if (idx < 3) {
-        setIdx((prev) => prev + 1);
+      const learningPlan = dashboardData?.review?.learningPlan || [];
+      const nextIndex = idx + 1;
+
+      if (nextIndex < learningPlan.length) {
+        setIdx(nextIndex);
         setcheckQuize(false);
         setCompleted(false);
         setCompletedTasks([]);
+        return;
       }
+
+      setPlanCompleted(true);
     } catch (error) {
       console.error("Error checking quiz:", error);
       handleError("Something went wrong. Please try again.");
+    }
+  };
+
+  const handleprev = () => {
+    if (idx !== 0) {
+      setIdx((prev) => prev - 1);
     }
   };
 
@@ -110,44 +130,83 @@ export default function Learning() {
       try {
         if (!obj?.userid) return;
 
-        const resp = await fetch("http://localhost:3000/getweek", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userid: obj.userid,
-          }),
+        const learningPlan = dashboardData?.review?.learningPlan;
+
+        if (!Array.isArray(learningPlan) || learningPlan.length === 0) {
+          return;
+        }
+
+        const resp = await axios.post("http://localhost:3000/getweek", {
+          userid: obj.userid,
         });
 
-        const data = await resp.json();
+        const data = resp.data;
 
-        if (!resp.ok || !data.currentweek) {
+        if (!data.currentweek) {
           handleError("Unable to fetch your learning plan");
           return;
         }
 
-        const weekNumber = Number(data.currentweek.split(" ")[1]);
-        const planLength = dashboardData?.review?.learningPlan?.length ?? 0;
 
-        if (weekNumber > planLength) {
-          setPlanCompleted(true);
+        console.log("Complete Learning Plan:", learningPlan);
+
+console.log("Week 2:", learningPlan[1]);
+console.log("Week 3:", learningPlan[2]);
+console.log("Week 4:", learningPlan[3]);
+
+        const currentWeekIndex = learningPlan.findIndex(
+          (week) => week.week.trim() === data.currentweek.trim()
+        );
+
+        if (currentWeekIndex === -1) {
+          const currentWeekNumber = Number(data.currentweek.split(" ")[1]);
+          const lastWeekNumber = Number(
+            learningPlan[learningPlan.length - 1].week.split(" ")[1]
+          );
+
+          if (
+            Number.isFinite(currentWeekNumber) &&
+            Number.isFinite(lastWeekNumber) &&
+            currentWeekNumber > lastWeekNumber
+          ) {
+            if (data.quizPassed) {
+              if (reviewMode) {
+                setPlanCompleted(false);
+                setIdx(0);
+              } else {
+                setPlanCompleted(true);
+              }
+            } else {
+              handleError(
+                "Pass the last week's quiz to complete your learning plan"
+              );
+              setPlanCompleted(false);
+              setIdx(learningPlan.length - 1);
+            }
+
+            return;
+          }
+
+          console.error("Current week not found:", {
+            currentweek: data.currentweek,
+            availableWeeks: learningPlan.map((week) => week.week),
+          });
+
           return;
         }
 
         setPlanCompleted(false);
 
-        if (weekNumber - 1 === idx) return;
-
-        if (weekNumber > 1 && !data.quizPassed) {
+        if (currentWeekIndex > 0 && !data.quizPassed) {
           handleError(
-            "Complete the previous week's quiz with more than 5 correct answers",
+            "Complete the previous week's quiz with more than 5 correct answers"
           );
-          setIdx(weekNumber - 2);
+
+          setIdx(currentWeekIndex - 1);
           return;
         }
 
-        setIdx(weekNumber - 1);
+        setIdx(currentWeekIndex);
         setCompleted(false);
         setCompletedTasks([]);
       } catch (error) {
@@ -157,13 +216,14 @@ export default function Learning() {
     };
 
     getweek();
-  }, [obj?.userid]);
+  }, [obj?.userid, dashboardData?.review?.learningPlan]);
 
   useEffect(() => {
-    console.log("useEffect is running");
     if (!obj?.userid || !weekData?.week) {
       return;
     }
+
+    setCompletedTasks([]);
     getprogress();
   }, [obj?.userid, weekData?.week]);
 
@@ -171,7 +231,6 @@ export default function Learning() {
     return (progresstasks || []).includes(topic);
   };
 
-  // navitage to quize
   const startquize = () => {
     navigate(`/dashboard/learningquize/${idx}`);
   };
@@ -189,7 +248,28 @@ export default function Learning() {
 
         <p className="text-neutral-600 text-lg max-w-md">
           You've completed all the weeks in your learning plan. Great work!
+          Choose what you want to learn next.
         </p>
+
+        <button
+          className="mt-6 bg-green-400 px-8 py-4 rounded-2xl font-semibold"
+          onClick={() => {
+            navigate("/dashboard/nextmonthplan");
+          }}
+        >
+          Continue Learning
+        </button>
+
+        <button
+          className="mt-3 bg-white px-8 py-4 rounded-2xl font-semibold hover:bg-neutral-100"
+          onClick={() => {
+            setReviewMode(true);
+            setPlanCompleted(false);
+            setIdx(0);
+          }}
+        >
+          Review my plan
+        </button>
       </div>
     );
   }
@@ -221,6 +301,7 @@ export default function Learning() {
         {/* Outcome */}
         <div className="relative overflow-hidden bg-[#F4A6C4] rounded-[2.5rem] p-7 mb-8">
           <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-[#F7C56C]/70" />
+
           <div className="relative flex gap-4 items-start">
             <div className="w-12 h-12 shrink-0 rounded-full bg-white/70 flex items-center justify-center">
               <Target className="text-neutral-800" size={22} />
@@ -230,6 +311,7 @@ export default function Learning() {
               <h3 className="text-xl font-bold mb-1 text-neutral-900">
                 Expected outcome
               </h3>
+
               <p className="text-base text-neutral-800">
                 {weekData.expectedOutcome}
               </p>
@@ -246,6 +328,7 @@ export default function Learning() {
                 <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center">
                   <BookOpen className="text-neutral-800" size={18} />
                 </div>
+
                 <h2 className="text-2xl font-bold text-neutral-900">
                   Topics to learn
                 </h2>
@@ -258,8 +341,20 @@ export default function Learning() {
 
             <div className="px-5 pb-5 space-y-2.5">
               {(weekData.topics || []).map((topic, index) => {
-                const isChecked = completedTasks.includes(topic);
-                const isDisabled = handledisable(topic);
+                const topicText =
+                  typeof topic === "string"
+                    ? topic
+                    : topic?.topic ||
+                      topic?.title ||
+                      topic?.name ||
+                      "Untitled topic";
+
+                const isChecked =
+                  completedTasks.includes(topicText) ||
+                  handledisable(topicText);
+
+                const isDisabled = handledisable(topicText);
+
                 return (
                   <label
                     key={index}
@@ -273,11 +368,12 @@ export default function Learning() {
                       type="checkbox"
                       className="sr-only"
                       checked={isChecked}
-                      onChange={() => handleCheck(topic)}
+                      onChange={() => handleCheck(topicText)}
                       disabled={isDisabled}
                     />
+
                     <span
-                      className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center ${
                         isChecked
                           ? "bg-neutral-900 border-neutral-900"
                           : "bg-white border-neutral-400"
@@ -291,7 +387,8 @@ export default function Learning() {
                         />
                       )}
                     </span>
-                    <p className="text-neutral-900">{topic}</p>
+
+                    <p className="text-neutral-900">{topicText}</p>
                   </label>
                 );
               })}
@@ -305,6 +402,7 @@ export default function Learning() {
                 <div className="w-10 h-10 rounded-full bg-white/60 flex items-center justify-center">
                   <Code2 className="text-neutral-800" size={18} />
                 </div>
+
                 <h2 className="text-2xl font-bold text-neutral-900">
                   Practice activities
                 </h2>
@@ -317,8 +415,21 @@ export default function Learning() {
 
             <div className="px-5 pb-5 space-y-2.5">
               {(weekData.practiceActivities || []).map((activity, index) => {
-                const isChecked = completedTasks.includes(activity);
-                const isDisabled = handledisable(activity);
+                const activityText =
+                  typeof activity === "string"
+                    ? activity
+                    : activity?.activity ||
+                      activity?.title ||
+                      activity?.name ||
+                      activity?.task ||
+                      "Untitled activity";
+
+                const isChecked =
+                  completedTasks.includes(activityText) ||
+                  handledisable(activityText);
+
+                const isDisabled = handledisable(activityText);
+
                 return (
                   <label
                     key={index}
@@ -332,11 +443,12 @@ export default function Learning() {
                       type="checkbox"
                       className="sr-only"
                       checked={isChecked}
-                      onChange={() => handleCheck(activity)}
+                      onChange={() => handleCheck(activityText)}
                       disabled={isDisabled}
                     />
+
                     <span
-                      className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      className={`w-6 h-6 shrink-0 rounded-full border-2 flex items-center justify-center ${
                         isChecked
                           ? "bg-neutral-900 border-neutral-900"
                           : "bg-white border-neutral-400"
@@ -350,7 +462,8 @@ export default function Learning() {
                         />
                       )}
                     </span>
-                    <p className="text-neutral-900">{activity}</p>
+
+                    <p className="text-neutral-900">{activityText}</p>
                   </label>
                 );
               })}
@@ -364,6 +477,7 @@ export default function Learning() {
             <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center">
               <Lock size={18} className="text-neutral-600" />
             </div>
+
             {completed ? (
               <button
                 className="px-5 py-2 rounded-full bg-neutral-900 text-white font-semibold hover:bg-neutral-800"
@@ -377,18 +491,26 @@ export default function Learning() {
               </p>
             )}
           </div>
+
           <div className="flex flex-wrap gap-3">
             <button
               className={`px-5 py-2.5 rounded-full font-semibold transition-colors ${
-                idx === dashboardData?.review?.learningPlan?.length - 1
+                idx === 0
                   ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-                  : "bg-[#F4A6C4] text-neutral-900 hover:bg-[#f097ba]"
+                  : "bg-neutral-900 text-white hover:bg-neutral-800"
               }`}
-              onClick={handleweek}
-              disabled={idx === dashboardData?.review?.learningPlan?.length - 1}
+              onClick={handleprev}
             >
-              Next week
+              Previous week
             </button>
+
+            <button
+              className="px-5 py-2.5 rounded-full font-semibold transition-colors bg-[#F4A6C4] text-neutral-900 hover:bg-[#f097ba]"
+              onClick={handleweek}
+            >
+              {idx === totalWeeks - 1 ? "Finish plan" : "Next week"}
+            </button>
+
             <button
               className="px-5 py-2.5 rounded-full bg-[#AEB86C] text-white font-semibold hover:bg-[#9ea75c]"
               onClick={saveprogress}

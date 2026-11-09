@@ -3,34 +3,25 @@ import UserContext from "../utils/UserContext";
 import Header from "./Header";
 import { Outlet } from "react-router-dom";
 import Shimmer from "./Shimmer";
+import axios from 'axios' ;
 
-// import Main from "./Main";
 const Dashboard = () => {
   const { obj } = useContext(UserContext);
   const [dashboardData, setDashboardData] = useState();
 
-  useEffect(() => {
-    const getDashboard = async () => {
-      const response = await fetch("http://localhost:3000/aidata", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userid: obj?.userid,
-        }),
-      });
+useEffect(() => {
+  const getDashboard = async () => {
+    const response = await axios.post("http://localhost:3000/aidata", {
+      userid: obj?.userid,
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardData(data);
-      }
-    };
+    setDashboardData(response.data);
+  };
 
-    if (obj?.userid) {
-      getDashboard();
-    }
-  }, [obj?.userid]);
+  if (obj?.userid) {
+    getDashboard();
+  }
+}, [obj?.userid]);
 
   // useEffect(() => {
   //   console.log(dashboardData);

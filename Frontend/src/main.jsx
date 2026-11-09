@@ -15,6 +15,9 @@ import LearningPlan from "./Components/LearningPlan.jsx";
 import Projects from "./Components/Projects.jsx";
 import LearningQuize from "./Components/LearningQuize.jsx";
 import "react-toastify/ReactToastify.css";
+import NextMonthPlan from "./Components/NextMonthPlan.jsx"
+import Contact from "./Components/Contact.jsx";
+import NotFound from "./Components/NotFound.jsx";
 
 const appRouter = createBrowserRouter([
   {
@@ -50,6 +53,10 @@ const appRouter = createBrowserRouter([
             element: <AboutUs />,
           },
           {
+            path : "contact" ,
+            element: <Contact/>
+          },
+          {
             path: "resume-analyser",
             element: <ResumeAnalyser />,
           },
@@ -62,11 +69,19 @@ const appRouter = createBrowserRouter([
             element: <Projects />,
           },
           {
+            path : "nextmonthplan",
+            element : <NextMonthPlan/>
+          } ,
+          {
             path : "learningquize/:week" ,
             element : <LearningQuize />
           }
         ],
       },
+      {
+        path : "*" , 
+        element : <NotFound/>
+      }
     ],
   },
 ]);

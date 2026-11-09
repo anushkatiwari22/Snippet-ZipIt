@@ -10,9 +10,7 @@ const authmiddleware = require("./middleware/authmiddleware");
 const cookieParser = require('cookie-parser');
 const progressRouter = require('./controllers/progressRoutes');
 const learningquizeRouter = require('./controllers/learningquizeRouter');
-
-
-
+const nextlearningplan = require('./controllers/nextlearningplan')
 
 app.use(express.json());
 app.use(express.urlencoded({extended : true}));
@@ -33,6 +31,7 @@ app.use("/",answerRouter);
 app.use("/" , authmiddleware);
 app.use("/" , progressRouter);
 app.use("/" , learningquizeRouter);
+app.use("/" , nextlearningplan);
 
 
 app.listen(3000,() => {

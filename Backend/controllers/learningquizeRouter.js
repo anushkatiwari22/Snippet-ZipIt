@@ -3,41 +3,77 @@ const express = require("express");
 const router = express.Router();
 require("dotenv").config();
 const aireviewModel = require("../models/aireviewModel");
+const requireQuizAccess = require("../middleware/requireQuizAccess");
 
 const { learningQuizeModel } = require("../models/learningQuize");
+const { QUIZ_QUESTIONS, QUIZ_PASS_MARK } = require("../utils/planConfig");
 
-router.route("/getquize").post(getlearningquize);
-router.route("/saveoption").post(saveoption);
-router.route("/showresult").post(showresult);
+router.route("/getquize").post(requireQuizAccess ,getlearningquize);
+router.route("/saveoption").post(requireQuizAccess,saveoption);
+router.route("/showresult").post(requireQuizAccess, showresult);
 
-async function getlearningquize(req, res) {
-  let { userid, week } = req.body;
-  // console.log(userid);
-  week = `Week ${Number(week) + 1}`;
-  // console.log(week);
-  const userdata = await aireviewModel.findOne({ userid: userid });
-  // console.log(userdata);
-  if (userdata) {
-    const weekPlan = userdata.review.learningPlan.find((w) => w.week === week);
-    // console.log(weekPlan);
-    let userQuiz = await learningQuizeModel.findOne({ userid });
 
-    if (userQuiz) {
-      const existingWeek = userQuiz.questions.find((q) => q.week === week);
+const inFlight = new Map(); 
 
-      if (existingWeek) {
-        const sanitizedQuiz = existingWeek.questions.map((q) => ({
-          question: q.question,
-          options: q.options,
-        }));
+function httpError(status, message) {
+  const err = new Error(message);
+  err.status = status;
+  return err;
+}
 
-        return res.json({
-          quiz: sanitizedQuiz,
-        });
-      }
+function normalizeQuestions(raw) {
+  if (!Array.isArray(raw) || raw.length !== QUIZ_QUESTIONS) return null;
+
+  const letters = ["a", "b", "c", "d"];
+  const out = [];
+
+  for (const q of raw) {
+    if (
+      !q ||
+      typeof q.question !== "string" ||
+      !Array.isArray(q.options) ||
+      q.options.length !== 4
+    ) {
+      return null;
     }
 
-    const prompt = `
+    const options = q.options.map((o) => String(o).trim());
+    const answer = String(q.answer ?? "").trim();
+
+    let match = options.find((o) => o === answer);
+    if (!match) {
+      match = options.find((o) => o.toLowerCase() === answer.toLowerCase());
+    }
+    if (!match) {
+      const letter = answer.match(/^(?:option\s*)?([a-d])[).:]?$/i);
+      if (letter) match = options[letters.indexOf(letter[1].toLowerCase())];
+    }
+    if (!match) return null;
+
+    out.push({
+      question: q.question.trim(),
+      options,
+      answer: match,
+      explanation: String(q.explanation ?? "").trim(),
+    });
+  }
+
+  return out;
+}
+
+async function loadOrCreateQuiz(userid, week) {
+  const userdata = await aireviewModel.findOne({ userid });
+  if (!userdata) throw httpError(404, "Learning plan not found");
+
+  const weekPlan = userdata.review?.learningPlan?.find((w) => w.week === week);
+  if (!weekPlan) throw httpError(404, `${week} is not in your learning plan`);
+
+  let userQuiz = await learningQuizeModel.findOne({ userid });
+
+  const existingWeek = userQuiz?.questions.find((q) => q.week === week);
+  if (existingWeek) return existingWeek.questions;
+
+  const prompt = `
         You are an expert technical instructor.
 
     Based on the following weekly learning plan, generate a quiz to evaluate the student's understanding.
@@ -62,9 +98,10 @@ async function getlearningquize(req, res) {
     3. Mix easy, medium, and hard questions.
     4. Each question must have exactly 4 options.
     5. Only one option should be correct.
-    6. Include an explanation for the correct answer.
-    7. Do not generate questions from topics outside this week's plan.
-    8. Return ONLY valid JSON.
+    6. The "answer" field must be the exact full text of the correct option, copied character for character from the options array.
+    7. Include an explanation for the correct answer.
+    8. Do not generate questions from topics outside this week's plan.
+    9. Return ONLY valid JSON.
 
       Return ONLY a valid JSON object.
 
@@ -92,70 +129,73 @@ async function getlearningquize(req, res) {
       Do not return any text outside the JSON object.
       `;
 
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        },
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-120b",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    }),
+  });
 
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          response_format: {
-            type: "json_object",
-          },
-        }),
-      },
-    );
-    const ai_questions = await response.json();
-    if (!ai_questions?.choices?.length) {
-      console.log(ai_questions);
+  const ai_questions = await response.json();
+  if (!ai_questions?.choices?.length) {
+    console.error("Groq did not return choices:", ai_questions);
+    throw httpError(502, "Could not generate the quiz. Please try again.");
+  }
 
-      return res.status(500).json({
-        message: "Groq did not return choices",
-        error: ai_questions,
-      });
+  let parsed;
+  try {
+    parsed = JSON.parse(ai_questions.choices[0].message.content);
+  } catch (error) {
+    throw httpError(502, "Quiz generation returned invalid data. Please try again.");
+  }
+
+  const questionsArray = normalizeQuestions(parsed.questions);
+  if (!questionsArray) {
+    throw httpError(502, "Quiz generation was incomplete. Please try again.");
+  }
+
+  if (!userQuiz) {
+    await learningQuizeModel.create({
+      userid,
+      questions: [{ week, questions: questionsArray }],
+    });
+  } else {
+    userQuiz.questions.push({ week, questions: questionsArray });
+    await userQuiz.save();
+  }
+
+  return questionsArray;
+}
+
+async function getlearningquize(req, res) {
+  try {
+    const { userid } = req.body;
+    const week = `Week ${Number(req.body.week) + 1}`;
+    const key = `${userid}:${week}`;
+
+    if (!inFlight.has(key)) {
+      inFlight.set(
+        key,
+        loadOrCreateQuiz(userid, week).finally(() => inFlight.delete(key)),
+      );
     }
 
-    const aiquestions = JSON.parse(ai_questions.choices[0].message.content);
-    const questionsArray = aiquestions.questions;
-
-    if (!userQuiz) {
-      userQuiz = await learningQuizeModel.create({
-        userid,
-        questions: [
-          {
-            week,
-            questions: questionsArray,
-          },
-        ],
-      });
-    } else {
-      const existingWeek = userQuiz.questions.find((q) => q.week === week);
-
-      if (!existingWeek) {
-        userQuiz.questions.push({
-          week,
-          questions: questionsArray,
-        });
-        await userQuiz.save();
-      }
-    }
-    const sanitizedQuiz = questionsArray.map((q) => ({
-      question: q.question,
-      options: q.options,
-    }));
+    const questions = await inFlight.get(key);
 
     return res.json({
-      quiz: sanitizedQuiz,
+      quiz: questions.map((q) => ({ question: q.question, options: q.options })),
+    });
+  } catch (error) {
+    console.error("getquize error:", error);
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Failed to load quiz",
     });
   }
 }
@@ -299,7 +339,6 @@ async function showresult(req, res) {
         correct: savedAnswer?.correct ?? null,
       };
     });
-    // console.log(results);
 
     const score = results.filter((item) => item.correct === true).length;
 
@@ -310,6 +349,9 @@ async function showresult(req, res) {
       week: weekName,
       score,
       totalQuestions,
+      passMark: QUIZ_PASS_MARK,
+      passed: score >= QUIZ_PASS_MARK,
+      attempted: results.filter((item) => item.correct !== null).length,
       results,
     });
   } catch (error) {
@@ -322,7 +364,7 @@ async function showresult(req, res) {
   }
 }
 
-router.post("/getquestion", async (req, res) => {
+router.post("/getquestion", requireQuizAccess, async (req, res) => {
   try {
     const { userid, week } = req.body;
 
@@ -360,7 +402,7 @@ router.post("/getquestion", async (req, res) => {
   }
 });
 
-router.post("/reattempt", async (req, res) => {
+router.post("/reattempt",requireQuizAccess, async (req, res) => {
   try {
     const { userid, week } = req.body;
 
